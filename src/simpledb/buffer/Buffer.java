@@ -1,7 +1,12 @@
 package simpledb.buffer;
 
+
+
+import java.util.Date;
+
+import simpledb.file.Block;
+import simpledb.file.Page;
 import simpledb.server.SimpleDB;
-import simpledb.file.*;
 
 /**
  * An individual buffer. A buffer wraps a page and stores information about its
@@ -19,6 +24,7 @@ public class Buffer {
 	private int modifiedBy = -1; // negative means not modified
 	private int logSequenceNumber = -1; // negative means no corresponding log
 										// record
+	private long timestamp;
 
 	/**
 	 * Creates a new buffer, wrapping a new {@link simpledb.file.Page page}.
@@ -193,5 +199,14 @@ public class Buffer {
 		fmtr.format(contents);
 		blk = contents.append(filename);
 		pins = 0;
+	}
+	
+	public long timeStamp(){
+		return this.timestamp;
+	}
+	
+	public void updateTimeStamp(){
+		Date date = new Date();
+		this.timestamp = date.getTime();
 	}
 }
