@@ -13,10 +13,13 @@ import simpledb.file.FileMgr;
  */
 class BasicBufferMgr {
 	private Buffer[] bufferpool;
+	private int[] refBits;
+	private int currentClockIndex;
 	private HashSet<Buffer> emptyBufferSet;
 	private Hashtable<Block, Buffer> blockToBuffer;
 	private int numAvailable;
 	private PriorityQueue<Buffer> leastRecUsed;
+	private Policy policy;
 
 	/**
 	 * * Creates a buffer manager having the specified number of buffer slots. *
@@ -28,7 +31,9 @@ class BasicBufferMgr {
 	 * first. * * @param numbuffs * the number of buffer slots to allocate
 	 */
 	BasicBufferMgr(int numbuffs, Policy policy) {
+		this.policy = policy;
 		bufferpool = new Buffer[numbuffs];
+		refBits = new int[numbuffs];
 		emptyBufferSet = new HashSet<Buffer>();
 		numAvailable = numbuffs;
 		blockToBuffer = new Hashtable<Block, Buffer>();
@@ -49,7 +54,9 @@ class BasicBufferMgr {
 			emptyBufferSet.add(bufferpool[i]);
 			bufferpool[i].updateTimeStamp();
 			leastRecUsed.add(bufferpool[i]);
+			refBits[i] = 0;
 		}
+		currentClockIndex = 0;
 	}
 
 	/**
@@ -144,22 +151,35 @@ class BasicBufferMgr {
 
 	private Buffer chooseUnpinnedBuffer() {
 		Buffer buff;
-		
 		buff = findEmptyBuffer();
-		if (buff != null) {
-			emptyBufferSet.remove(buff);
-			if (buff.block() != null) {
-				blockToBuffer.remove(buff.block());
+		
+		if(buff == null){
+			if (policy == Policy.leastRecentUsed){
+				buff = leastRecUsed.poll();
+			} else {
+				for(int i = 0; i < bufferpool.length * 2; i++){
+					if(bufferpool[currentClockIndex].isPinned()){
+						continue;
+					} else if(refBits[currentClockIndex] == 1){
+						refBits[currentClockIndex] = 0;
+						currentClockIndex = (currentClockIndex + 1) % bufferpool.length;
+					} else {
+						refBits[currentClockIndex] = 1;
+						buff = bufferpool[currentClockIndex];
+						break;
+					}
+				}
 			}
-		} else {
-			buff = leastRecUsed.poll();
 		}
 		return buff;
 	}
 
 	private Buffer findEmptyBuffer() {
+		Buffer buff;
 		if (!emptyBufferSet.isEmpty()) {
-			return emptyBufferSet.iterator().next();
+			buff = emptyBufferSet.iterator().next();
+			emptyBufferSet.remove(buff);
+			return buff;
 		} else {
 			return null;
 		}
