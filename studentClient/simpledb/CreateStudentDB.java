@@ -18,7 +18,7 @@ public class CreateStudentDB {
 					"(2, 'amy', 20, 2004)", "(3, 'max', 10, 2005)",
 					"(4, 'sue', 20, 2005)", "(5, 'bob', 30, 2003)",
 					"(6, 'kim', 20, 2001)", "(7, 'art', 30, 2004)",
-					"(8, 'pat', 20, 2001)", "(9, 'lee', 10, 2004)" };
+					"(8, 'pat', 20, 2001)", "(9, 'lee', 20, 2004)" };
 			for (int i = 0; i < studvals.length; i++)
 				stmt.executeUpdate(s + studvals[i]);
 			System.out.println("STUDENT records inserted.");

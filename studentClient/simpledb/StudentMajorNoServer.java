@@ -1,6 +1,8 @@
-import simpledb.tx.Transaction;
-import simpledb.query.*;
+import simpledb.buffer.Policy;
+import simpledb.query.Plan;
+import simpledb.query.Scan;
 import simpledb.server.SimpleDB;
+import simpledb.tx.Transaction;
 
 /* This is a version of the StudentMajor program that
  * accesses the SimpleDB classes directly (instead of
@@ -15,7 +17,7 @@ public class StudentMajorNoServer {
 	public static void main(String[] args) {
 		try {
 			// analogous to the driver
-			SimpleDB.init("studentdb");
+			SimpleDB.init("studentdb", Policy.leastRecentUsed);
 
 			// analogous to the connection
 			Transaction tx = new Transaction();

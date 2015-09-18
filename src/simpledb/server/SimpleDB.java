@@ -35,8 +35,8 @@ public class SimpleDB {
 	 * @param dirname
 	 *            the name of the database directory
 	 */
-	public static void init(String dirname) {
-		initFileLogAndBufferMgr(dirname);
+	public static void init(String dirname, Policy policy) {
+		initFileLogAndBufferMgr(dirname, policy);
 		Transaction tx = new Transaction();
 		boolean isnew = fm.isNew();
 		if (isnew)
@@ -80,9 +80,9 @@ public class SimpleDB {
 	 * @param dirname
 	 *            the name of the database directory
 	 */
-	public static void initFileLogAndBufferMgr(String dirname) {
+	public static void initFileLogAndBufferMgr(String dirname, Policy policy) {
 		initFileAndLogMgr(dirname);
-		bm = new BufferMgr(BUFFER_SIZE);
+		bm = new BufferMgr(BUFFER_SIZE, policy);
 	}
 
 	/**

@@ -27,7 +27,7 @@ class BasicBufferMgr {
 	 * {@link simpledb.server.SimpleDB#initFileAndLogMgr(String)} or is called *
 	 * first. * * @param numbuffs * the number of buffer slots to allocate
 	 */
-	BasicBufferMgr(int numbuffs) {
+	BasicBufferMgr(int numbuffs, Policy policy) {
 		bufferpool = new Buffer[numbuffs];
 		emptyBufferSet = new HashSet<Buffer>();
 		numAvailable = numbuffs;
@@ -81,6 +81,9 @@ class BasicBufferMgr {
 			numAvailable--;
 		buff.pin();
 		blockToBuffer.put(blk, buff);
+
+		
+		leastRecUsed.remove(buff);
 		return buff;
 	}
 
@@ -99,6 +102,8 @@ class BasicBufferMgr {
 		numAvailable--;
 		buff.pin();
 		blockToBuffer.put(buff.block(), buff);
+		
+		leastRecUsed.remove(buff);
 		return buff;
 	}
 
@@ -112,6 +117,9 @@ class BasicBufferMgr {
 			emptyBufferSet.add(buff);
 			numAvailable++;
 		}
+		
+		buff.updateTimeStamp();
+		leastRecUsed.add(buff);
 	}
 
 	/**
@@ -135,12 +143,16 @@ class BasicBufferMgr {
 	}
 
 	private Buffer chooseUnpinnedBuffer() {
-		Buffer buff = findEmptyBuffer();
+		Buffer buff;
+		
+		buff = findEmptyBuffer();
 		if (buff != null) {
 			emptyBufferSet.remove(buff);
 			if (buff.block() != null) {
 				blockToBuffer.remove(buff.block());
 			}
+		} else {
+			buff = leastRecUsed.poll();
 		}
 		return buff;
 	}

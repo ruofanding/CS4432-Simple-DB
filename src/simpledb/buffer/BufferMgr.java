@@ -30,8 +30,8 @@ public class BufferMgr {
 	 * @param numbuffers
 	 *            the number of buffer slots to allocate
 	 */
-	public BufferMgr(int numbuffers) {
-		bufferMgr = new BasicBufferMgr(numbuffers);
+	public BufferMgr(int numbuffers, Policy policy) {
+		bufferMgr = new BasicBufferMgr(numbuffers, policy);
 	}
 
 	/**
