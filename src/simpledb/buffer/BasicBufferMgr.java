@@ -3,7 +3,9 @@ package simpledb.buffer;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
+
 import simpledb.file.Block;
 import simpledb.file.FileMgr;
 
@@ -13,10 +15,14 @@ import simpledb.file.FileMgr;
  */
 class BasicBufferMgr {
 	private Buffer[] bufferpool;
-	private HashSet<Buffer> emptyBufferSet;
+	private LinkedList<Buffer> emptyBufferList;
 	private Hashtable<Block, Buffer> blockToBuffer;
 	private int numAvailable;
+	
+	private Policy policy;
+	
 	private PriorityQueue<Buffer> leastRecUsed;
+	
 
 	/**
 	 * * Creates a buffer manager having the specified number of buffer slots. *
@@ -29,27 +35,40 @@ class BasicBufferMgr {
 	 */
 	BasicBufferMgr(int numbuffs, Policy policy) {
 		bufferpool = new Buffer[numbuffs];
-		emptyBufferSet = new HashSet<Buffer>();
+		emptyBufferList = new LinkedList<Buffer>();
 		numAvailable = numbuffs;
 		blockToBuffer = new Hashtable<Block, Buffer>();
-		Comparator<Buffer> bufferComparator = new Comparator<Buffer>() {
-			public int compare(Buffer o1, Buffer o2) {
-				if (o1.timeStamp() == o2.timeStamp()) {
-					return 0;
-				} else if (o1.timeStamp() > o2.timeStamp()) {
-					return 1;
-				} else {
-					return -1;
-				}
-			}
-		};
-		leastRecUsed = new PriorityQueue<Buffer>(bufferComparator);
+		this.policy = policy;
+		
 		for (int i = 0; i < numbuffs; i++) {
 			bufferpool[i] = new Buffer();
-			emptyBufferSet.add(bufferpool[i]);
+			emptyBufferList.add(bufferpool[i]);
 			bufferpool[i].updateTimeStamp();
-			leastRecUsed.add(bufferpool[i]);
 		}
+		
+		switch(policy){
+		case clock:
+			break;
+		case leastRecentUsed:
+			Comparator<Buffer> bufferComparator = new Comparator<Buffer>() {
+				public int compare(Buffer o1, Buffer o2) {
+					if (o1.timeStamp() == o2.timeStamp()) {
+						return 0;
+					} else if (o1.timeStamp() > o2.timeStamp()) {
+						return 1;
+					} else {
+						return -1;
+					}
+				}
+			};
+			leastRecUsed = new PriorityQueue<Buffer>(bufferComparator);
+			for (int i = 0; i < numbuffs; i++) {
+				bufferpool[i].updateTimeStamp();
+				leastRecUsed.add(bufferpool[i]);
+			}
+		}
+		
+		
 	}
 
 	/**
@@ -82,8 +101,10 @@ class BasicBufferMgr {
 		buff.pin();
 		blockToBuffer.put(blk, buff);
 
+		if(policy == Policy.leastRecentUsed){
+			leastRecUsed.remove(buff);
+		}
 		
-		leastRecUsed.remove(buff);
 		return buff;
 	}
 
@@ -103,7 +124,9 @@ class BasicBufferMgr {
 		buff.pin();
 		blockToBuffer.put(buff.block(), buff);
 		
-		leastRecUsed.remove(buff);
+		if(this.policy == Policy.leastRecentUsed){
+			leastRecUsed.remove(buff);
+		}
 		return buff;
 	}
 
@@ -114,12 +137,13 @@ class BasicBufferMgr {
 	synchronized void unpin(Buffer buff) {
 		buff.unpin();
 		if (!buff.isPinned()) {
-			emptyBufferSet.add(buff);
 			numAvailable++;
 		}
 		
-		buff.updateTimeStamp();
-		leastRecUsed.add(buff);
+		if(policy == Policy.leastRecentUsed){
+			buff.updateTimeStamp();
+			leastRecUsed.add(buff);
+		}
 	}
 
 	/**
@@ -132,36 +156,34 @@ class BasicBufferMgr {
 
 	private Buffer findExistingBuffer(Block blk) {
 		if (blockToBuffer.containsKey(blk)) {
-			leastRecUsed.poll();
 			return blockToBuffer.get(blk);
 		} else {
 			return null;
-		} /*
-		 * * for (Buffer buff : bufferpool) { Block b = buff.block(); if (b != *
-		 * null && b.equals(blk)) return buff; } return null;
-		 */
+		}
 	}
 
 	private Buffer chooseUnpinnedBuffer() {
 		Buffer buff;
 		
+		//Find empty buffer
 		buff = findEmptyBuffer();
+		
+		//Find unpinned buffer if no empty buffer.
+		if (buff == null){
+			if(this.policy == Policy.leastRecentUsed){
+				buff = leastRecUsed.poll();
+			}
+		}
+		
 		if (buff != null) {
-			emptyBufferSet.remove(buff);
 			if (buff.block() != null) {
 				blockToBuffer.remove(buff.block());
 			}
-		} else {
-			buff = leastRecUsed.poll();
 		}
 		return buff;
 	}
 
 	private Buffer findEmptyBuffer() {
-		if (!emptyBufferSet.isEmpty()) {
-			return emptyBufferSet.iterator().next();
-		} else {
-			return null;
-		}
+		return emptyBufferList.poll();
 	}
 }
