@@ -35,7 +35,7 @@ public class Buffer {
 		if(blk == null){
 			result.append("Block ID: null,");
 		} else {
-			result.append("Block IP: " + blk.toString() +",");
+			result.append("Block ID: " + blk.toString() +",");
 		}
 		result.append("Pin: " + this.pins + ",");
 		
