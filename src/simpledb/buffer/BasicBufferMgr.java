@@ -18,11 +18,13 @@ class BasicBufferMgr {
 	private LinkedList<Buffer> emptyBufferList;
 	private Hashtable<Block, Buffer> blockToBuffer;
 	private int numAvailable;
-	
+
 	private Policy policy;
-	
+
 	private PriorityQueue<Buffer> leastRecUsed;
-	
+
+	private int[] refBits;
+	private int currentClockIndex;
 
 	/**
 	 * * Creates a buffer manager having the specified number of buffer slots. *
@@ -39,15 +41,20 @@ class BasicBufferMgr {
 		numAvailable = numbuffs;
 		blockToBuffer = new Hashtable<Block, Buffer>();
 		this.policy = policy;
-		
+
 		for (int i = 0; i < numbuffs; i++) {
 			bufferpool[i] = new Buffer();
 			emptyBufferList.add(bufferpool[i]);
 			bufferpool[i].updateTimeStamp();
 		}
-		
-		switch(policy){
+
+		switch (policy) {
 		case clock:
+			refBits = new int[numbuffs];
+			for (int i = 0; i < numbuffs; i++) {
+				refBits[i] = 1;
+			}
+			currentClockIndex = numbuffs - 1;
 			break;
 		case leastRecentUsed:
 			Comparator<Buffer> bufferComparator = new Comparator<Buffer>() {
@@ -66,9 +73,9 @@ class BasicBufferMgr {
 				bufferpool[i].updateTimeStamp();
 				leastRecUsed.add(bufferpool[i]);
 			}
+			break;
 		}
-		
-		
+
 	}
 
 	/**
@@ -101,10 +108,10 @@ class BasicBufferMgr {
 		buff.pin();
 		blockToBuffer.put(blk, buff);
 
-		if(policy == Policy.leastRecentUsed){
+		if (policy == Policy.leastRecentUsed) {
 			leastRecUsed.remove(buff);
 		}
-		
+
 		return buff;
 	}
 
@@ -123,8 +130,8 @@ class BasicBufferMgr {
 		numAvailable--;
 		buff.pin();
 		blockToBuffer.put(buff.block(), buff);
-		
-		if(this.policy == Policy.leastRecentUsed){
+
+		if (this.policy == Policy.leastRecentUsed) {
 			leastRecUsed.remove(buff);
 		}
 		return buff;
@@ -139,8 +146,8 @@ class BasicBufferMgr {
 		if (!buff.isPinned()) {
 			numAvailable++;
 		}
-		
-		if(policy == Policy.leastRecentUsed){
+
+		if (policy == Policy.leastRecentUsed) {
 			buff.updateTimeStamp();
 			leastRecUsed.add(buff);
 		}
@@ -164,17 +171,34 @@ class BasicBufferMgr {
 
 	private Buffer chooseUnpinnedBuffer() {
 		Buffer buff;
-		
-		//Find empty buffer
+
+		// Find empty buffer
 		buff = findEmptyBuffer();
-		
-		//Find unpinned buffer if no empty buffer.
-		if (buff == null){
-			if(this.policy == Policy.leastRecentUsed){
+
+		// Find unpinned buffer if no empty buffer.
+		if (buff == null) {
+			switch (this.policy) {
+			case leastRecentUsed:
 				buff = leastRecUsed.poll();
+				break;
+			case clock:
+				for (int i = 0; i < bufferpool.length * 2; i++) {
+					if (bufferpool[currentClockIndex].isPinned()) {
+						currentClockIndex = (currentClockIndex + 1) % bufferpool.length;
+						continue;
+					} else if (refBits[currentClockIndex] == 1) {
+						refBits[currentClockIndex] = 0;
+						currentClockIndex = (currentClockIndex + 1) % bufferpool.length;
+					} else {
+						refBits[currentClockIndex] = 1;
+						buff = bufferpool[currentClockIndex];
+						break;
+					}
+				}
+				break;
 			}
 		}
-		
+
 		if (buff != null) {
 			if (buff.block() != null) {
 				blockToBuffer.remove(buff.block());
