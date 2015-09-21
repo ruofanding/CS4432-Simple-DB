@@ -1,4 +1,4 @@
-import simpledb.buffer.Policy;
+ import simpledb.buffer.Policy;
 import simpledb.query.Plan;
 import simpledb.query.Scan;
 import simpledb.server.SimpleDB;
@@ -22,9 +22,12 @@ public class StudentMajorNoServer {
 			// analogous to the connection
 			Transaction tx = new Transaction();
 
+			String ss = "create table STUDENT(SId int, SName varchar(10), MajorId int, GradYear int)";
+			SimpleDB.planner().executeUpdate(ss, tx);
+			
 			// analogous to the statement
-			String qry = "select SName, DName " + "from DEPT, STUDENT "
-					+ "where MajorId = DId";
+			String qry = "select SName " + "from STUDENT";
+			
 			Plan p = SimpleDB.planner().createQueryPlan(qry, tx);
 
 			// analogous to the result set
@@ -37,6 +40,8 @@ public class StudentMajorNoServer {
 				String dname = s.getString("dname"); // in lower case
 				System.out.println(sname + "\t" + dname);
 			}
+			
+			System.out.println(SimpleDB.bufferMgr().getBufferMgrInfo());
 			s.close();
 			tx.commit();
 		} catch (Exception e) {

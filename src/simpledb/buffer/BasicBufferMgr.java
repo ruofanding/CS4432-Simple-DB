@@ -43,7 +43,7 @@ class BasicBufferMgr {
 		this.policy = policy;
 
 		for (int i = 0; i < numbuffs; i++) {
-			bufferpool[i] = new Buffer();
+			bufferpool[i] = new Buffer(i);
 			emptyBufferList.add(bufferpool[i]);
 			bufferpool[i].updateTimeStamp();
 		}
@@ -76,6 +76,17 @@ class BasicBufferMgr {
 			break;
 		}
 
+	}
+	
+	public String toString(){
+		StringBuilder result = new StringBuilder();
+		
+		result.append("Basic buffer Manager\nPolicy:" + this.policy + "\nBufferpool contents:\n");
+		for(Buffer buff : bufferpool){
+			result.append(buff.toString() + "\n");
+		}
+		
+		return result.toString();
 	}
 
 	/**
@@ -175,7 +186,7 @@ class BasicBufferMgr {
 		// Find empty buffer
 		buff = findEmptyBuffer();
 
-		// Find unpinned buffer if no empty buffer.
+		// Use policy to find unpinned buffer if no empty buffer available.
 		if (buff == null) {
 			switch (this.policy) {
 			case leastRecentUsed:

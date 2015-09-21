@@ -33,6 +33,10 @@ public class BufferMgr {
 	public BufferMgr(int numbuffers, Policy policy) {
 		bufferMgr = new BasicBufferMgr(numbuffers, policy);
 	}
+	
+	public String getBufferMgrInfo(){
+		return this.bufferMgr.toString();
+	}
 
 	/**
 	 * Pins a buffer to the specified block, potentially waiting until a buffer

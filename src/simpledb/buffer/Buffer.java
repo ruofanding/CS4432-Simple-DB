@@ -24,7 +24,23 @@ public class Buffer {
 	private int modifiedBy = -1; // negative means not modified
 	private int logSequenceNumber = -1; // negative means no corresponding log
 										// record
+	
+	private int id;
+	
 	private long timestamp;
+	
+	public String toString(){
+		StringBuilder result= new StringBuilder();
+		result.append("ID: " + id +",");
+		if(blk == null){
+			result.append("Block ID: null,");
+		} else {
+			result.append("Block IP: " + blk.toString() +",");
+		}
+		result.append("Pin: " + this.pins + ",");
+		
+		return result.toString();
+	}
 
 	/**
 	 * Creates a new buffer, wrapping a new {@link simpledb.file.Page page}.
@@ -36,7 +52,8 @@ public class Buffer {
 	 * {@link simpledb.server.SimpleDB#initFileAndLogMgr(String)} or is called
 	 * first.
 	 */
-	public Buffer() {
+	public Buffer(int id) {
+		this.id = id;
 	}
 
 	/**
