@@ -45,11 +45,12 @@ public class StudentMajorNoServer {
 			Collections.shuffle(majorIdList);
 			String studentData = new String();
 			
-			for(int i = 0; i < 1000; i++)
+			for(int i = 0; i < 9; i++)
 			{
-				Collections.shuffle(majorIdList);
-				studentData = insertStudents + "("+ i + ", " + "'a" + i + "', " + majorIdList.get(0) + ", 2004)";
-				SimpleDB.planner().executeUpdate(insertStudents + studvals, tx);
+				//Collections.shuffle(majorIdList);
+				//studentData = insertStudents + "("+ i + ", " + "'a" + i + "', " + majorIdList.get(0) + ", 2004)";
+				//System.out.println(studentData);
+				SimpleDB.planner().executeUpdate(insertStudents + studvals[i], tx);
 			}
 			
 			String qry = "select SName " + "from STUDENT";
