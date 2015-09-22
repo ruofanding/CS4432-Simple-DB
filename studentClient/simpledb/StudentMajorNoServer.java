@@ -20,7 +20,7 @@ public class StudentMajorNoServer {
 	public static void main(String[] args) {
 		try {
 			// analogous to the driver
-			SimpleDB.init("studentdb", Policy.leastRecentUsed);
+			SimpleDB.init("studentdb", Policy.clock);
 
 			// analogous to the connection
 			Transaction tx = new Transaction();
@@ -42,33 +42,58 @@ public class StudentMajorNoServer {
 			majorIdList.add(20);
 			majorIdList.add(30);
 
-			Collections.shuffle(majorIdList);
 			String studentData = new String();
 			
-			for(int i = 0; i < 9; i++)
+			for(int i = 0; i < 100; i++)
 			{
 				//Collections.shuffle(majorIdList);
-				//studentData = insertStudents + "("+ i + ", " + "'a" + i + "', " + majorIdList.get(0) + ", 2004)";
-				//System.out.println(studentData);
-				SimpleDB.planner().executeUpdate(insertStudents + studvals[i], tx);
+				studentData = "("+ i + ", " + "'a" + i + "', " + majorIdList.get(i%3) + ", 2004)";
+				SimpleDB.planner().executeUpdate(insertStudents + studentData, tx);
 			}
 			
+			tx.commit();
 			String qry = "select SName " + "from STUDENT";
+			Thread.sleep(4000);
+			
+			System.out.println("-----QUery------");
 			Plan p = SimpleDB.planner().createQueryPlan(qry, tx);
 
 			// analogous to the result set
 			Scan s = p.open();
 
-			System.out.println("Name\tMajor");
+			System.out.println(p.blocksAccessed());
+			System.out.println(p.recordsOutput());
+			//System.out.println("Name\tMajor");
+			
 			while (s.next()) {
 				String sname = s.getString("sname"); // SimpleDB stores field
 														// names
 				//String dname = s.getString("dname"); // in lower case
-				System.out.println(sname + "\t");
+				//System.out.println(sname + "\t");
 			}
+			s.close();
+			
+			
+			p = SimpleDB.planner().createQueryPlan(qry, tx);
+
+			// analogous to the result set
+			s = p.open();
+
+			System.out.println(p.blocksAccessed());
+			System.out.println(p.recordsOutput());
+			//System.out.println("Name\tMajor");
+			
+			while (s.next()) {
+				String sname = s.getString("sname"); // SimpleDB stores field
+														// names
+				//String dname = s.getString("dname"); // in lower case
+				//System.out.println(sname + "\t");
+			}
+			s.close();
+			
 			
 			System.out.println(SimpleDB.bufferMgr().getBufferMgrInfo());
-			s.close();
+
 			tx.commit();
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -55,6 +55,10 @@ public class Buffer {
 	public Buffer(int id) {
 		this.id = id;
 	}
+	
+	public int getId(){
+		return this.id;
+	}
 
 	/**
 	 * Returns the integer value at the specified offset of the buffer's page.
