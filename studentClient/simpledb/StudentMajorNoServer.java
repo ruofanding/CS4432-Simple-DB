@@ -23,19 +23,16 @@ public class StudentMajorNoServer {
 			SimpleDB.init("studentdb", Policy.clock);
 
 			// analogous to the connection
-			Transaction tx = new Transaction();
+			Transaction tx;
 
+			tx = new Transaction();
 			String studentTable = "create table STUDENT(SId int, SName varchar(10), MajorId int, GradYear int)";
 			SimpleDB.planner().executeUpdate(studentTable, tx);
+			tx.commit();
 			
 			// analogous to the statement
 			
 			String insertStudents = "insert into STUDENT(SId, SName, MajorId, GradYear) values ";
-			String[] studvals = { "(1, 'joe', 10, 2004)",
-					"(2, 'amy', 20, 2004)", "(3, 'max', 10, 2005)",
-					"(4, 'sue', 20, 2005)", "(5, 'bob', 30, 2003)",
-					"(6, 'kim', 20, 2001)", "(7, 'art', 30, 2004)",
-					"(8, 'pat', 20, 2001)", "(9, 'lee', 20, 2004)" };
 			
 			ArrayList<Integer>  majorIdList = new ArrayList<Integer>();
 			majorIdList.add(10);
@@ -44,16 +41,17 @@ public class StudentMajorNoServer {
 
 			String studentData = new String();
 			
-			for(int i = 0; i < 100; i++)
+			for(int i = 0; i < 1000; i++)
 			{
-				//Collections.shuffle(majorIdList);
+				tx = new Transaction();
 				studentData = "("+ i + ", " + "'a" + i + "', " + majorIdList.get(i%3) + ", 2004)";
 				SimpleDB.planner().executeUpdate(insertStudents + studentData, tx);
+				tx.commit();
 			}
 			
-			tx.commit();
+
 			String qry = "select SName " + "from STUDENT";
-			Thread.sleep(4000);
+
 			
 			System.out.println("-----QUery------");
 			Plan p = SimpleDB.planner().createQueryPlan(qry, tx);

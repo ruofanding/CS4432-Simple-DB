@@ -29,6 +29,11 @@ public class Buffer {
 	
 	private long timestamp;
 	
+	/**
+	 * CS4432-Project1:
+	 * Task 2.5
+	 * For testing and debuging purpose.
+	 */
 	public String toString(){
 		StringBuilder result= new StringBuilder();
 		result.append("ID: " + id +",");
@@ -168,6 +173,12 @@ public class Buffer {
 		pins--;
 	}
 
+	
+	/**
+	 * CS4432-Project1:
+	 * Task 2.4
+	 * Indicate whether it is pinned or not
+	 */
 	/**
 	 * Returns true if the buffer is currently pinned (that is, if it has a
 	 * nonzero pin count).
@@ -178,6 +189,11 @@ public class Buffer {
 		return pins > 0;
 	}
 
+	/**
+	 * CS4432-Project1:
+	 * Task 2.4
+	 * Indicate whether a buffer is modified or not
+	 */
 	/**
 	 * Returns true if the buffer is dirty due to a modification by the
 	 * specified transaction.
@@ -222,12 +238,22 @@ public class Buffer {
 		pins = 0;
 	}
 	
+	/**
+	 * CS4432-Project1:
+	 * Task 2.3
+	 * return the timestamp of the buffer
+	 * @return
+	 */
 	public long timeStamp(){
 		return this.timestamp;
 	}
 	
+	/**
+	 * CS4432-Project1:
+	 * Task 2.3
+	 * Update the timestamp of the buffer
+	 */
 	public void updateTimeStamp(){
-		Date date = new Date();
-		this.timestamp = date.getTime();
+		this.timestamp = System.nanoTime();
 	}
 }
