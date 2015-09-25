@@ -20,10 +20,23 @@ import simpledb.tx.Transaction;
  */
 
 public class ClockTest {
+	private static String getRandomName(Random r) {
+		StringBuilder s = new StringBuilder();
+		for (int i = 0; i < 7; i++) {
+			s.append((char) (r.nextInt(26) + 'a'));
+		}
+		return s.toString();
+	}
+
 	public static void main(String[] args) {
 		try {
+			int SIZE = 200;
+			String[] names = new String[SIZE];
+			int[] majors = new int[SIZE];
+			int[] years = new int[SIZE];
+
 			// analogous to the driver
-			SimpleDB.init("studentdb", Policy.leastRecentUsed);
+			SimpleDB.init("studentdb", Policy.clock);
 
 			// analogous to the connection
 			Transaction tx;
@@ -45,54 +58,65 @@ public class ClockTest {
 			String studentData = new String();
 
 			Random r = new Random(0);
-			for (int i = 0; i < 200; i++) {
+			for (int i = 0; i < SIZE; i++) {
 				tx = new Transaction();
-				studentData = "(" + i + ", " + "'a" + i + "', "
-						+ majorIdList.get(r.nextInt(3)) + ", " + 2000 +  + r.nextInt(15) + ")";
-				SimpleDB.planner().executeUpdate(insertStudents + studentData, tx);
+				names[i] = getRandomName(r);
+				years[i] = 2000 + r.nextInt(15);
+				majors[i] = majorIdList.get(r.nextInt(3));
+				studentData = "(" + i + ", '" + names[i] + "', " + majors[i]
+						+ ", " + years[i] + ")";
+				SimpleDB.planner().executeUpdate(insertStudents + studentData,
+						tx);
 				tx.commit();
 			}
 
-			String qry = "select SName from STUDENT";
-			tx = new Transaction();
+			String qry = "select SId, SName, MajorId, GradYear from STUDENT";
 			SimpleDB.bufferMgr().enableDebug();
-			SimpleDB.planner().createQueryPlan(qry, tx);
-			tx.commit();
-			
-			/*
+
 			Planner p;
 			Scan s;
 			Plan plan;
-			
-			String previousBufferOutput="";
+
 			tx = new Transaction();
 			p = SimpleDB.planner();
-			for(int i = 0; i < 3; i++){
-				plan = p.createQueryPlan(qry, tx);
+			plan = p.createQueryPlan(qry, tx);
 
-				System.out.println("-----QUery------");
-							// analogous to the result set
-				s = plan.open();
-	
-				while (s.next()) {
-					String bufferOutput = SimpleDB.bufferMgr().getBufferMgrInfo();
-					System.out.println(bufferOutput);
-					if(!previousBufferOutput.equals(bufferOutput)){
-						System.out.println(bufferOutput);
-						previousBufferOutput = bufferOutput;
-					}
+			System.out.println("-----QUery------");
+			// analogous to the result set
+			s = plan.open();
+
+			boolean matched = true;
+			while (s.next()) {
+				if (!s.getString("sname").equals(names[s.getInt("sid")])) {
+					matched = false;
+					System.out.println("Name does not match");
 				}
-				s.close();
-			}*/
-			//tx.commit();
+				if (!(s.getInt("majorid") == majors[s.getInt("sid")])) {
+					matched = false;
+					System.out.println("Major does not match");
+				}
+				if (!(s.getInt("gradyear") == years[s.getInt("sid")])) {
+					matched = false;
+					System.out.println("Year does not match");
+				}
+			}			
+			s.close();
+			tx.commit();
 			
+
+
+			SimpleDB.bufferMgr().disableDebug();
 			tx = new Transaction();
 			SimpleDB.planner().executeUpdate("DELETE FROM STUDENT", tx);
 			tx.commit();
 			
-			//tx = new Transaction();
-			//SimpleDB.planner().executeUpdate("DROP TABLE STUDENT", tx);
-			//tx.commit();
+			System.out.println("---------Result----------");
+			if(matched){
+				System.out.println("All selected data match inserted data");
+			}else{
+				System.out.println("Data not matched");
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

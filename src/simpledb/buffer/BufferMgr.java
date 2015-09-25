@@ -55,6 +55,9 @@ public class BufferMgr {
 	public void enableDebug(){
 		this.debug = true;
 	}
+	public void disableDebug(){
+		this.debug = false;
+	}
 
 	/**
 	 * Pins a buffer to the specified block, potentially waiting until a buffer
