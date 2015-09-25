@@ -19,7 +19,7 @@ public class BufferMgr {
 	private static final long MAX_TIME = 10000; // 10 seconds
 	private BasicBufferMgr bufferMgr;
 	private String previousBufferInfo;
-	private boolean debug = false;
+	private boolean debug = true;
 
 	/**
 	 * Creates a new buffer manager having the specified number of buffers. This

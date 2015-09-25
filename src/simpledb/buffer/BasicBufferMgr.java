@@ -68,7 +68,7 @@ class BasicBufferMgr {
 			for (int i = 0; i < numbuffs; i++) {
 				refBits[i] = 1;
 			}
-			currentClockIndex = numbuffs - 1;
+			currentClockIndex = 0;
 			break;
 		case leastRecentUsed:
 			LRUComparator = new Comparator<Buffer>() {

@@ -19,11 +19,11 @@ import simpledb.tx.Transaction;
  * your changes to the SimpleDB source code.
  */
 
-public class CS4432Test {
+public class ClockTest {
 	public static void main(String[] args) {
 		try {
 			// analogous to the driver
-			SimpleDB.init("studentdb", Policy.leastRecentUsed);
+			SimpleDB.init("studentdb", Policy.clock);
 
 			// analogous to the connection
 			Transaction tx;
