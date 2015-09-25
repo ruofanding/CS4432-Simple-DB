@@ -23,7 +23,7 @@ public class ClockTest {
 	public static void main(String[] args) {
 		try {
 			// analogous to the driver
-			SimpleDB.init("studentdb", Policy.clock);
+			SimpleDB.init("studentdb", Policy.leastRecentUsed);
 
 			// analogous to the connection
 			Transaction tx;
@@ -45,7 +45,7 @@ public class ClockTest {
 			String studentData = new String();
 
 			Random r = new Random(0);
-			for (int i = 0; i < 90; i++) {
+			for (int i = 0; i < 200; i++) {
 				tx = new Transaction();
 				studentData = "(" + i + ", " + "'a" + i + "', "
 						+ majorIdList.get(r.nextInt(3)) + ", " + 2000 +  + r.nextInt(15) + ")";

@@ -44,11 +44,13 @@ public class LRUTest {
 
 			String studentData = new String();
 
+			SimpleDB.bufferMgr().enableDebug();
 			Random r = new Random(0);
-			for (int i = 0; i < 90; i++) {
+			for (int i = 200; i >= 0; i--) {
 				tx = new Transaction();
 				studentData = "(" + i + ", " + "'a" + i + "', "
-						+ majorIdList.get(r.nextInt(3)) + ", " + 2000 +  + r.nextInt(15) + ")";
+						+ majorIdList.get(r.nextInt(3)) + ", " + (2000 +  + r.nextInt(15)) + ")";
+				System.out.println(studentData);
 				SimpleDB.planner().executeUpdate(insertStudents + studentData, tx);
 				tx.commit();
 			}

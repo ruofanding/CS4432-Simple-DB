@@ -1,12 +1,13 @@
 package simpledb.buffer;
 
-import java.awt.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
+import java.util.Set;
 
 import simpledb.file.Block;
 import simpledb.file.FileMgr;
@@ -83,10 +84,6 @@ class BasicBufferMgr {
 				}
 			};
 			leastRecUsed = new PriorityQueue<Buffer>(LRUComparator);
-			for (int i = 0; i < numbuffs; i++) {
-				bufferpool[i].updateTimeStamp();
-				leastRecUsed.add(bufferpool[i]);
-			}
 			break;
 		}
 
@@ -98,21 +95,32 @@ class BasicBufferMgr {
 	 */
 	public String toString() {
 		StringBuilder result = new StringBuilder();
-		ArrayList<Buffer> bufferList = new ArrayList<Buffer>();
+		ArrayList<Buffer> bufferList = null;
 
 		if (this.policy == Policy.leastRecentUsed) {
+			bufferList = new ArrayList<Buffer>();
 			for (Buffer buff : bufferpool) {
-				bufferList.add(buff);
+				if(!buff.isPinned()){
+					bufferList.add(buff);
+				}
 			}
 			Collections.sort(bufferList, LRUComparator);
 		}
 
 		result.append("Basic buffer Manager\nPolicy:" + this.policy
 				+ "\nBufferpool contents:\n");
+		if(this.policy == Policy.leastRecentUsed){
+			result.append("Size" + this.leastRecUsed.size() + "\n");
+			for(Buffer b : this.leastRecUsed){
+				if(b.isPinned()){
+					result.append("Why?" + b.getId() + "\n ");
+				}
+			}
+		}
 		for (int i = 0; i < bufferpool.length; i++) {
 			result.append(bufferpool[i].toString());
 			if (this.policy == Policy.clock) {
-				result.append(" " + refBits[i]);
+				result.append(" ref=" + refBits[i]);
 				if (this.currentClockIndex == i) {
 					result.append("<--");
 				}
@@ -123,7 +131,7 @@ class BasicBufferMgr {
 						order = j;
 					}
 				}
-				result.append(" " + bufferpool[i].timeStamp() + "(" + order
+				result.append(" timestamp=" + bufferpool[i].timeStamp() + "(" + order
 						+ ")");
 			}
 			result.append("\n");
@@ -169,10 +177,10 @@ class BasicBufferMgr {
 		buff.pin();
 		blockToBuffer.put(blk, buff);
 
-		if (policy == Policy.leastRecentUsed) {
-			leastRecUsed.remove(buff);
+		if(this.policy == Policy.leastRecentUsed){
+			this.leastRecUsed.remove(buff);
 		}
-
+		
 		return buff;
 	}
 
@@ -196,9 +204,10 @@ class BasicBufferMgr {
 		buff.pin();
 		blockToBuffer.put(buff.block(), buff);
 
-		if (this.policy == Policy.leastRecentUsed) {
-			leastRecUsed.remove(buff);
+		if(this.policy == Policy.leastRecentUsed){
+			this.leastRecUsed.remove(buff);
 		}
+
 		return buff;
 	}
 
@@ -217,8 +226,10 @@ class BasicBufferMgr {
 		}
 
 		if (policy == Policy.leastRecentUsed) {
-			buff.updateTimeStamp();
-			leastRecUsed.add(buff);
+			if(!buff.isPinned()){
+				buff.updateTimeStamp();
+				leastRecUsed.add(buff);
+			}
 		}
 	}
 
