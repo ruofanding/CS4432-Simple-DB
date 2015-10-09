@@ -19,6 +19,12 @@ import simpledb.tx.Transaction;
  * your changes to the SimpleDB source code.
  */
 
+
+/**
+ * CS4432-Project1:
+ * Test for Clock policy
+ *
+ */
 public class ClockTest {
 	private static String getRandomName(Random r) {
 		StringBuilder s = new StringBuilder();
