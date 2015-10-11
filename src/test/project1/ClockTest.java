@@ -1,4 +1,4 @@
-package test;
+package test.project1;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -19,12 +19,13 @@ import simpledb.tx.Transaction;
  * your changes to the SimpleDB source code.
  */
 
+
 /**
  * CS4432-Project1:
- * Test for LRU policy
+ * Test for Clock policy
  *
  */
-public class LRUTest {
+public class ClockTest {
 	private static String getRandomName(Random r) {
 		StringBuilder s = new StringBuilder();
 		for (int i = 0; i < 7; i++) {
@@ -41,7 +42,7 @@ public class LRUTest {
 			int[] years = new int[SIZE];
 
 			// analogous to the driver
-			SimpleDB.init("studentdb", Policy.leastRecentUsed);
+			SimpleDB.init("studentdb", Policy.clock);
 
 			// analogous to the connection
 			Transaction tx;
