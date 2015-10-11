@@ -6,6 +6,7 @@ import simpledb.server.SimpleDB;
 import simpledb.tx.Transaction;
 import simpledb.record.*;
 import simpledb.index.Index;
+import simpledb.index.extensibleindex.ExtensibleIndex;
 import simpledb.index.hash.HashIndex;
 import simpledb.index.btree.BTreeIndex; //in case we change to btree indexing
 
@@ -52,7 +53,15 @@ public class IndexInfo {
 	public Index open() {
 		Schema sch = schema();
 		// Create new HashIndex for hash indexing
-		return new HashIndex(idxname, sch, tx);
+		if(idxtype.equals("sh")){
+			return new HashIndex(idxname, sch, tx);
+		} else if(idxtype.equals("bt")){
+			return new BTreeIndex(idxname, sch, tx);
+		} else if(idxtype.equals("eh")){
+			return new ExtensibleIndex(idxname, sch, tx);
+		} else { // Default
+			return new HashIndex(idxname, sch, tx);
+		}
 	}
 
 	/**

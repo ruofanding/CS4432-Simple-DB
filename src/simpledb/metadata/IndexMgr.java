@@ -2,7 +2,10 @@ package simpledb.metadata;
 
 import static simpledb.metadata.TableMgr.MAX_NAME;
 import simpledb.tx.Transaction;
+import simpledb.index.extensibleindex.ExtensibleIndex;
+import simpledb.query.TableScan;
 import simpledb.record.*;
+
 import java.util.*;
 
 /**
@@ -67,6 +70,28 @@ public class IndexMgr {
 		rf.setString("indexname", idxname);
 		rf.setString("tablename", tblname);
 		rf.setString("fieldname", fldname);
+		
+		if(idxtype.equals("eh")){
+			TableInfo tableInfo = ExtensibleIndex.getEHTableInfo(idxname);
+			TableScan ts = new TableScan(tableInfo, tx);
+			
+			System.out.println("create index -------------");
+			
+			if(!ts.next()){
+				ts.insert();
+				ts.setInt("depth", 0);
+				ts.setInt("index", -1);
+				ts.setInt("size", 1);
+				ts.setInt("bucketId", -1);
+				
+				ts.insert();
+				ts.setInt("depth", 0);
+				ts.setInt("index", 0);
+				ts.setInt("size", 0);
+				ts.setInt("bucketId", 0);
+			}
+		}
+		
 		rf.close();
 	}
 

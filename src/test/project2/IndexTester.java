@@ -36,7 +36,7 @@ public class IndexTester {
 
 	public static void main(String[] args) {
 		try {
-			int SIZE = 200;
+			int SIZE = 10;
 			String[] names = new String[SIZE];
 			int[] majors = new int[SIZE];
 			int[] years = new int[SIZE];
@@ -51,7 +51,12 @@ public class IndexTester {
 			String studentTable = "create table STUDENT(SId int, SName varchar(10), MajorId int, GradYear int)";
 			SimpleDB.planner().executeUpdate(studentTable, tx);
 			tx.commit();
+			
+			tx = new Transaction();
+			SimpleDB.planner().executeUpdate("create eh index myIndex on STUDENT (SId)", tx);
 
+			tx.commit();
+			
 			// analogous to the statement
 
 			String insertStudents = "insert into STUDENT(SId, SName, MajorId, GradYear) values ";
@@ -62,7 +67,7 @@ public class IndexTester {
 			majorIdList.add(30);
 
 			String studentData = new String();
-
+			SimpleDB.bufferMgr().disableDebug();
 			Random r = new Random(0);
 			for (int i = 0; i < SIZE; i++) {
 				tx = new Transaction();
@@ -76,12 +81,11 @@ public class IndexTester {
 				tx.commit();
 			}
 			
-			tx = new Transaction();
-			SimpleDB.planner().executeUpdate("create sh index myIndex on STUDENT (SId)", tx);
+
 			
 
 			String qry = "select SId, SName, MajorId, GradYear from STUDENT";
-			SimpleDB.bufferMgr().enableDebug();
+			
 
 			Planner p;
 			Scan s;
@@ -112,7 +116,13 @@ public class IndexTester {
 			}			
 			s.close();
 			tx.commit();
-			
+
+			System.out.println("---------Result----------");
+			if(matched){
+				System.out.println("All selected data match inserted data");
+			}else{
+				System.out.println("Data not matched");
+			}
 
 			if(true)return;
 			SimpleDB.bufferMgr().disableDebug();
@@ -120,12 +130,7 @@ public class IndexTester {
 			SimpleDB.planner().executeUpdate("DELETE FROM STUDENT", tx);
 			tx.commit();
 			
-			System.out.println("---------Result----------");
-			if(matched){
-				System.out.println("All selected data match inserted data");
-			}else{
-				System.out.println("Data not matched");
-			}
+		
 
 		} catch (Exception e) {
 			e.printStackTrace();
