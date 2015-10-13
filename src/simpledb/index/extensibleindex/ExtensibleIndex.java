@@ -145,8 +145,8 @@ public class ExtensibleIndex implements Index{
 		ts.beforeFirst();
 		
 		if(ts.next() && ts.getInt("index") == -1){
-			ts.setInt("size", this.size);
-			ts.setInt("depth", this.depth);
+			if(ts.getInt("size") != this.size) ts.setInt("size", this.size);
+			if(ts.getInt("depth") != this.depth) ts.setInt("depth", this.depth);
 		} else {
 			System.err.println("Global record does not exist");
 		}
@@ -156,9 +156,9 @@ public class ExtensibleIndex implements Index{
 			Bucket b = bucketList.get(i);
 			if(ts.next()){
 				if(ts.getInt("index") == i){
-					ts.setInt("depth", b.depth);
-					ts.setInt("size", b.size);
-					ts.setInt("bucketId", b.id);
+					if(ts.getInt("depth") != b.depth) ts.setInt("depth", b.depth);
+					if(ts.getInt("size") != b.size) ts.setInt("size", b.size);
+					if(ts.getInt("bucketId") != b.id) ts.setInt("bucketId", b.id);
 				}else{
 					System.err.println("Index doesn't match");
 				}
