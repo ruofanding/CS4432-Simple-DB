@@ -59,7 +59,6 @@ public class ExtensibleIndex implements Index{
 			Bucket newBucket= new Bucket(ts.getInt("bucketId"), ts.getInt("depth"), ts.getInt("size"), idxname, sch, tx);
 			bucketList.add(newBucket);
 		}
-		System.out.println(this.toString());
 	}
 
 	public String toString(){
@@ -92,7 +91,6 @@ public class ExtensibleIndex implements Index{
 	public void insert(Constant dataval, RID datarid) {
 		currentBucket = bucketList.get(dataval.hashCode() % size);
 		while(currentBucket.isFull()){
-			System.out.println("Current bucket " + currentBucket.id);
 			if(currentBucket.depth == this.depth){
 				for(int i = 0; i < size ; i++){
 					bucketList.add(bucketList.get(i));
@@ -147,6 +145,7 @@ public class ExtensibleIndex implements Index{
 
 	@Override
 	public void delete(Constant dataval, RID datarid) {
+		currentBucket = bucketList.get(dataval.hashCode() % size);
 		currentBucket.delete(dataval, datarid);
 	}
 

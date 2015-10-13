@@ -11,7 +11,7 @@ import simpledb.record.TableInfo;
 import simpledb.tx.Transaction;
 
 public class Bucket {
-	final int BUCKET_SIZE = 3;
+	final int BUCKET_SIZE = 10;
 	int depth;
 	int id;
 	int size;
@@ -37,6 +37,7 @@ public class Bucket {
 		ts.setInt("id", datarid.id());
 		ts.setVal("dataval", dataval);
 		size++;
+		ts.close();
 	}
 	
 	public List<RID> getDataRid(Constant dataval){
@@ -54,7 +55,7 @@ public class Bucket {
 				result.add(rid);
 			}
 		}
-		
+		ts.close();
 		return result;
 	}
 	
@@ -69,9 +70,11 @@ public class Bucket {
 			if(current.equals(datarid)){
 				ts.delete();
 				size--;
+				ts.close();
 				return;
 			}
 		}
+		ts.close();
 	}
 	
 	public boolean isFull(){
@@ -97,6 +100,7 @@ public class Bucket {
 		
 		this.depth++;
 		size = size - result.size();
+		ts.close();
 		return result;
 	}
 
