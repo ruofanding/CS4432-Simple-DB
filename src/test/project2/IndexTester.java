@@ -1,6 +1,7 @@
 package test.project2;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Random;
 
 import simpledb.buffer.Policy;
@@ -34,7 +35,7 @@ public class IndexTester {
 
 	public static void main(String[] args) {
 		try {
-			int SIZE = 1000;
+			int SIZE = 100;
 			String[] names = new String[SIZE];
 			int[] majors = new int[SIZE];
 			int[] years = new int[SIZE];
@@ -69,8 +70,8 @@ public class IndexTester {
 			SimpleDB.bufferMgr().disableDebug();
 			Planner pp = SimpleDB.planner();
 			Random r = new Random(0);
-			tx = new Transaction();
 			for (int i = 0; i < SIZE; i++) {
+				tx = new Transaction();
 				names[i] = getRandomName(r);
 				years[i] = 2000 + r.nextInt(15);
 				majors[i] = majorIdList.get(r.nextInt(3));
@@ -78,8 +79,8 @@ public class IndexTester {
 						+ ", " + years[i] + ")";
 				pp.executeUpdate(insertStudents + studentData,
 						tx);
+				tx.commit();
 			}
-			tx.commit();
 
 			String qry = "select SId, SName, MajorId, GradYear from STUDENT where SId = ";
 
@@ -87,16 +88,17 @@ public class IndexTester {
 			Scan s;
 			Plan plan;
 
+			Date start = new Date();
 			boolean matched = true;
 			System.out.println("-----QUery------");
+			tx = new Transaction();
 			for (int i = 0; i < SIZE; i++) {
-				tx = new Transaction();
 				p = SimpleDB.planner();
 				plan = p.createQueryPlan(qry + i, tx);
 
 				s = plan.open();
 
-				while (s.next()) {
+				if (s.next()) {
 					if (!s.getString("sname").equals(names[i])) {
 						matched = false;
 						System.out.println("Name does not match");
@@ -109,10 +111,12 @@ public class IndexTester {
 						matched = false;
 						System.out.println("Year does not match");
 					}
+				} else {
+					matched = false;
 				}
 				s.close();
-				tx.commit();
 			}
+			tx.commit();
 
 			System.out.println("---------Result----------");
 			if (matched) {
@@ -120,6 +124,7 @@ public class IndexTester {
 			} else {
 				System.out.println("Data not matched");
 			}
+			System.out.println(start + " " + new Date());
 
 			tx = new Transaction();
 			SimpleDB.planner().executeUpdate("DELETE FROM STUDENT", tx);

@@ -15,13 +15,33 @@ import simpledb.record.TableInfo;
 import simpledb.tx.Transaction;
 
 public class ExtensibleIndex implements Index{
+	static class Cache{
+		String idxname;
+		int depth;
+		int size;
+		ArrayList<Bucket> bucketList;
+			
+
+		public Cache(String idxname, int depth, int size, ArrayList<Bucket> bucketList){
+			this.idxname = idxname;
+			this.depth = size;
+			this.size = size;
+			this.bucketList = bucketList;
+		}
+
+		public void update(int depth, int size){
+			this.size = size;
+			this.depth = depth;
+		}
+	}
+
+	static Cache cache= null;
 	final int INIT_SIZE = 1;
 	String idxname;
 	Schema sch;
 	Transaction tx;
 	
 	ArrayList<Bucket> bucketList;
-	Bucket currentBucket = null;
 	Iterator<RID> currentIterator = null;
 	int depth;
 	int size;
@@ -36,6 +56,17 @@ public class ExtensibleIndex implements Index{
 	}
 	
 	public ExtensibleIndex(String idxname, Schema sch, Transaction tx) {
+		this.idxname = idxname;
+		this.sch = sch;
+		this.tx = tx;
+		
+		if(cache != null && cache.idxname == idxname){
+			this.size = cache.size;
+			this.depth = cache.depth;
+			this.bucketList = cache.bucketList;
+			return;
+		}
+
 		TableInfo ti = getEHTableInfo(idxname);
 		TableScan ts = new TableScan(ti, tx);
 		
@@ -50,15 +81,14 @@ public class ExtensibleIndex implements Index{
 			System.err.println("No extensible index created");
 		}
 		
-		this.idxname = idxname;
-		this.sch = sch;
-		this.tx = tx;
-		
-		bucketList = new ArrayList<Bucket>();
+				bucketList = new ArrayList<Bucket>();
 		while(ts.next()){
 			Bucket newBucket= new Bucket(ts.getInt("bucketId"), ts.getInt("depth"), ts.getInt("size"), idxname, sch, tx);
 			bucketList.add(newBucket);
 		}
+		ts.close();
+
+		cache = new Cache(idxname, depth, size, bucketList);
 	}
 
 	public String toString(){
@@ -71,9 +101,7 @@ public class ExtensibleIndex implements Index{
 	}
 	
 	public void beforeFirst(Constant searchkey) {
-		close();
-		int index = searchkey.hashCode() % (1<<depth);
-		currentBucket = bucketList.get(index);
+		Bucket currentBucket = bucketList.get(searchkey.hashCode() % size);
 		currentIterator = currentBucket.getDataRid(searchkey).iterator();
 	}
 
@@ -89,6 +117,7 @@ public class ExtensibleIndex implements Index{
 
 	@Override
 	public void insert(Constant dataval, RID datarid) {
+		Bucket currentBucket;
 		currentBucket = bucketList.get(dataval.hashCode() % size);
 		while(currentBucket.isFull()){
 			if(currentBucket.depth == this.depth){
@@ -141,19 +170,19 @@ public class ExtensibleIndex implements Index{
 				ts.setInt("bucketId", b.id);
 			}
 		}
+		ts.close();
+		cache.update(depth, size);
 	}
 
 	@Override
 	public void delete(Constant dataval, RID datarid) {
+		Bucket currentBucket;
 		currentBucket = bucketList.get(dataval.hashCode() % size);
 		currentBucket.delete(dataval, datarid);
 	}
 
 	@Override
 	public void close() {
-		if(currentBucket != null){
-			currentBucket = null;
-		}
 		currentIterator = null;
 	}
 
