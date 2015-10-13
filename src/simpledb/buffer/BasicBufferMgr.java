@@ -1,9 +1,14 @@
 package simpledb.buffer;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
+import java.util.Set;
+
 import simpledb.file.Block;
 import simpledb.file.FileMgr;
 
@@ -13,11 +18,29 @@ import simpledb.file.FileMgr;
  */
 class BasicBufferMgr {
 	private Buffer[] bufferpool;
-	private HashSet<Buffer> emptyBufferSet;
 	private Hashtable<Block, Buffer> blockToBuffer;
 	private int numAvailable;
-	private PriorityQueue<Buffer> leastRecUsed;
 
+	//CS4432-Project1:
+	//Task1 find emptyBufferList
+	private LinkedList<Buffer> emptyBufferList;
+
+	private Policy policy;
+
+	//LRU
+	private PriorityQueue<Buffer> leastRecUsed;
+	private Comparator<Buffer> LRUComparator;
+
+	//Clock
+	private int[] refBits;
+	private int currentClockIndex;
+
+	
+	/**
+	 * CS4432-Project1:
+	 * 1. we created a emptyBufferList, which will help us find a empty buffer quickly
+	 * 2. we initialize data structures based on which policy is used.
+	 */
 	/**
 	 * * Creates a buffer manager having the specified number of buffer slots. *
 	 * This constructor depends on both the {@link FileMgr} and *
@@ -29,27 +52,92 @@ class BasicBufferMgr {
 	 */
 	BasicBufferMgr(int numbuffs, Policy policy) {
 		bufferpool = new Buffer[numbuffs];
-		emptyBufferSet = new HashSet<Buffer>();
+		emptyBufferList = new LinkedList<Buffer>();
 		numAvailable = numbuffs;
 		blockToBuffer = new Hashtable<Block, Buffer>();
-		Comparator<Buffer> bufferComparator = new Comparator<Buffer>() {
-			public int compare(Buffer o1, Buffer o2) {
-				if (o1.timeStamp() == o2.timeStamp()) {
-					return 0;
-				} else if (o1.timeStamp() > o2.timeStamp()) {
-					return 1;
-				} else {
-					return -1;
+		this.policy = policy;
+
+		for (int i = 0; i < numbuffs; i++) {
+			bufferpool[i] = new Buffer(i);
+			emptyBufferList.add(bufferpool[i]);
+			bufferpool[i].updateTimeStamp();
+		}
+
+		switch (policy) {
+		case clock:
+			refBits = new int[numbuffs];
+			for (int i = 0; i < numbuffs; i++) {
+				refBits[i] = 1;
+			}
+			currentClockIndex = 0;
+			break;
+		case leastRecentUsed:
+			LRUComparator = new Comparator<Buffer>() {
+				public int compare(Buffer o1, Buffer o2) {
+					if (o1.timeStamp() == o2.timeStamp()) {
+						return 0;
+					} else if (o1.timeStamp() > o2.timeStamp()) {
+						return 1;
+					} else {
+						return -1;
+					}
+				}
+			};
+			leastRecUsed = new PriorityQueue<Buffer>(LRUComparator);
+			break;
+		}
+
+	}
+
+	/**
+	 * CS4432-Project1:
+	 * Convert buffer pool information to string based on its policy.
+	 */
+	public String toString() {
+		StringBuilder result = new StringBuilder();
+		ArrayList<Buffer> bufferList = null;
+
+		if (this.policy == Policy.leastRecentUsed) {
+			bufferList = new ArrayList<Buffer>();
+			for (Buffer buff : bufferpool) {
+				if(!buff.isPinned()){
+					bufferList.add(buff);
 				}
 			}
-		};
-		leastRecUsed = new PriorityQueue<Buffer>(bufferComparator);
-		for (int i = 0; i < numbuffs; i++) {
-			bufferpool[i] = new Buffer();
-			emptyBufferSet.add(bufferpool[i]);
-			bufferpool[i].updateTimeStamp();
-			leastRecUsed.add(bufferpool[i]);
+			Collections.sort(bufferList, LRUComparator);
 		}
+
+		result.append("Basic buffer Manager\nPolicy:" + this.policy
+				+ "\nBufferpool contents:\n");
+		if(this.policy == Policy.leastRecentUsed){
+			result.append("Size" + this.leastRecUsed.size() + "\n");
+			for(Buffer b : this.leastRecUsed){
+				if(b.isPinned()){
+					result.append("Why?" + b.getId() + "\n ");
+				}
+			}
+		}
+		for (int i = 0; i < bufferpool.length; i++) {
+			result.append(bufferpool[i].toString());
+			if (this.policy == Policy.clock) {
+				result.append(" ref=" + refBits[i]);
+				if (this.currentClockIndex == i) {
+					result.append("<--");
+				}
+			} else if (this.policy == Policy.leastRecentUsed) {
+				int order = -1;
+				for (int j = 0; j < bufferList.size(); j++) {
+					if (bufferList.get(j) == bufferpool[i]) {
+						order = j;
+					}
+				}
+				result.append(" timestamp=" + bufferpool[i].timeStamp() + "(" + order
+						+ ")");
+			}
+			result.append("\n");
+		}
+
+		return result.toString();
 	}
 
 	/**
@@ -62,6 +150,13 @@ class BasicBufferMgr {
 				buff.flush();
 	}
 
+	
+	/**
+	 * CS4432-Project1:
+	 * Task 2.2
+	 * We update the blockToBuffer hashmap if buffer is changed.
+	 * We remove the buffer to be pinned from leastRecUsed if the policy is LRU.
+	 */
 	/**
 	 * * Pins a buffer to the specified block. If there is already a buffer *
 	 * assigned to that block then that buffer is used; otherwise, an unpinned *
@@ -82,11 +177,17 @@ class BasicBufferMgr {
 		buff.pin();
 		blockToBuffer.put(blk, buff);
 
+		if(this.policy == Policy.leastRecentUsed){
+			this.leastRecUsed.remove(buff);
+		}
 		
-		leastRecUsed.remove(buff);
 		return buff;
 	}
 
+	/**
+	 * CS4432-Project1:
+	 * Same procedure as pin()
+	 */
 	/**
 	 * * Allocates a new block in the specified file, and pins a buffer to it. *
 	 * Returns null (without allocating the block) if there are no available *
@@ -102,11 +203,18 @@ class BasicBufferMgr {
 		numAvailable--;
 		buff.pin();
 		blockToBuffer.put(buff.block(), buff);
-		
-		leastRecUsed.remove(buff);
+
+		if(this.policy == Policy.leastRecentUsed){
+			this.leastRecUsed.remove(buff);
+		}
+
 		return buff;
 	}
 
+	/**
+	 * CS4432-Project1:
+	 * Update the time stamp of the buffer when it is unpinned in LRU.
+	 */
 	/**
 	 * * Unpins the specified buffer. * * @param buff * the buffer to be
 	 * unpinned
@@ -114,12 +222,15 @@ class BasicBufferMgr {
 	synchronized void unpin(Buffer buff) {
 		buff.unpin();
 		if (!buff.isPinned()) {
-			emptyBufferSet.add(buff);
 			numAvailable++;
 		}
-		
-		buff.updateTimeStamp();
-		leastRecUsed.add(buff);
+
+		if (policy == Policy.leastRecentUsed) {
+			if(!buff.isPinned()){
+				buff.updateTimeStamp();
+				leastRecUsed.add(buff);
+			}
+		}
 	}
 
 	/**
@@ -130,38 +241,84 @@ class BasicBufferMgr {
 		return numAvailable;
 	}
 
+	/**
+	 * CS4432-Project1:
+	 * Task 2.2
+	 * We use a hashtable blockToBuffer to find the buffer the 
+	 * given block is associated with if it exists.
+	 * @param blk
+	 * @return
+	 */
 	private Buffer findExistingBuffer(Block blk) {
 		if (blockToBuffer.containsKey(blk)) {
-			leastRecUsed.poll();
 			return blockToBuffer.get(blk);
 		} else {
 			return null;
-		} /*
-		 * * for (Buffer buff : bufferpool) { Block b = buff.block(); if (b != *
-		 * null && b.equals(blk)) return buff; } return null;
-		 */
+		}
 	}
 
+	/**
+	 * CS4432-Project1:
+	 * Task 2.3
+	 * First, we will try to return an empty buffer.
+	 * If there is no empty buffer, we will use the policy.
+	 * For LRU, we will retrieve the root from the priority 
+	 * queue which is the buffer with the smallest time stamp.
+	 * 
+	 * For Clock:
+	 * If pin == 1, move to the next buffer;
+	 * If pin == 0 && ref ==1, change ref to 0 and move to the next one;
+	 * Continue doing this until find one buffer with pin==0 && ref == 0,
+	 * and return this buffer.
+	 * 
+	 * @return
+	 */
 	private Buffer chooseUnpinnedBuffer() {
 		Buffer buff;
-		
+
+		// Find empty buffer
 		buff = findEmptyBuffer();
+
+		// Use policy to find unpinned buffer if no empty buffer available.
+		if (buff == null) {
+			switch (this.policy) {
+			case leastRecentUsed:
+				buff = leastRecUsed.poll();
+				break;
+			case clock:
+				for (int i = 0; i < bufferpool.length * 2; i++) {
+					if (bufferpool[currentClockIndex].isPinned()) {
+						currentClockIndex = (currentClockIndex + 1)
+								% bufferpool.length;
+						continue;
+					} else if (refBits[currentClockIndex] == 1) {
+						refBits[currentClockIndex] = 0;
+						currentClockIndex = (currentClockIndex + 1)
+								% bufferpool.length;
+					} else {
+						refBits[currentClockIndex] = 1;
+						buff = bufferpool[currentClockIndex];
+						break;
+					}
+				}
+				break;
+			}
+		}
+
 		if (buff != null) {
-			emptyBufferSet.remove(buff);
 			if (buff.block() != null) {
 				blockToBuffer.remove(buff.block());
 			}
-		} else {
-			buff = leastRecUsed.poll();
 		}
 		return buff;
 	}
 
+	/**
+	 * CS4432-Project1:
+	 * Task 2.1: return one empty buffer.
+	 * @return
+	 */
 	private Buffer findEmptyBuffer() {
-		if (!emptyBufferSet.isEmpty()) {
-			return emptyBufferSet.iterator().next();
-		} else {
-			return null;
-		}
+		return emptyBufferList.poll();
 	}
 }

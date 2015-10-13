@@ -1,6 +1,7 @@
 package simpledb.buffer;
 
 import simpledb.file.*;
+import simpledb.server.SimpleDB;
 
 /**
  * The publicly-accessible buffer manager. A buffer manager wraps a basic buffer
@@ -17,6 +18,8 @@ import simpledb.file.*;
 public class BufferMgr {
 	private static final long MAX_TIME = 10000; // 10 seconds
 	private BasicBufferMgr bufferMgr;
+	private String previousBufferInfo;
+	private boolean debug = false;
 
 	/**
 	 * Creates a new buffer manager having the specified number of buffers. This
@@ -32,6 +35,28 @@ public class BufferMgr {
 	 */
 	public BufferMgr(int numbuffers, Policy policy) {
 		bufferMgr = new BasicBufferMgr(numbuffers, policy);
+		previousBufferInfo = "";
+	}
+	
+	/**
+	 * CS4432-Project1:
+	 * Task 2.5
+	 * print buffer manager info
+	 * @return
+	 */
+	public String getBufferMgrInfo(){
+		return this.bufferMgr.toString();
+	}
+
+	/**
+	 * CS4432-Project1:
+	 * Enable printing buffer manager info
+	 */
+	public void enableDebug(){
+		this.debug = true;
+	}
+	public void disableDebug(){
+		this.debug = false;
 	}
 
 	/**
@@ -44,6 +69,7 @@ public class BufferMgr {
 	 * @return the buffer pinned to that block
 	 */
 	public synchronized Buffer pin(Block blk) {
+
 		try {
 			long timestamp = System.currentTimeMillis();
 			Buffer buff = bufferMgr.pin(blk);
@@ -53,6 +79,20 @@ public class BufferMgr {
 			}
 			if (buff == null)
 				throw new BufferAbortException();
+			
+			
+			/**
+			 * CS4432-Project1:
+			 * print if debug is enabled
+			 */
+			if(debug){
+				String bufferOutput = this.getBufferMgrInfo();
+				if(!previousBufferInfo.equals(bufferOutput)){
+					System.out.println(bufferOutput);
+					previousBufferInfo = bufferOutput;
+				}
+			}
+
 			return buff;
 		} catch (InterruptedException e) {
 			throw new BufferAbortException();

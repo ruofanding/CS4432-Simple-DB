@@ -121,7 +121,7 @@ public class SimpleDB {
 	 */
 	public static Planner planner() {
 		QueryPlanner qplanner = new BasicQueryPlanner();
-		UpdatePlanner uplanner = new BasicUpdatePlanner();
+		UpdatePlanner uplanner = new IndexUpdatePlanner();//new BasicUpdatePlanner();
 		return new Planner(qplanner, uplanner);
 	}
 }

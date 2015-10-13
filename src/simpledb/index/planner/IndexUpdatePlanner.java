@@ -35,7 +35,7 @@ public class IndexUpdatePlanner implements UpdatePlanner {
 		Iterator<Constant> valIter = data.vals().iterator();
 		for (String fldname : data.fields()) {
 			Constant val = valIter.next();
-			System.out.println("Modify field " + fldname + " to val " + val);
+			//System.out.println("Modify field " + fldname + " to val " + val);
 			s.setVal(fldname, val);
 
 			IndexInfo ii = indexes.get(fldname);
@@ -117,7 +117,7 @@ public class IndexUpdatePlanner implements UpdatePlanner {
 	}
 
 	public int executeCreateIndex(CreateIndexData data, Transaction tx) {
-		SimpleDB.mdMgr().createIndex(data.indexName(), data.tableName(),
+		SimpleDB.mdMgr().createIndex(data.indexType(), data.indexName(), data.tableName(),
 				data.fieldName(), tx);
 		return 0;
 	}

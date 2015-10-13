@@ -2,7 +2,10 @@ package simpledb.metadata;
 
 import static simpledb.metadata.TableMgr.MAX_NAME;
 import simpledb.tx.Transaction;
+import simpledb.index.extensibleindex.ExtensibleIndex;
+import simpledb.query.TableScan;
 import simpledb.record.*;
+
 import java.util.*;
 
 /**
@@ -29,6 +32,7 @@ public class IndexMgr {
 			sch.addStringField("indexname", MAX_NAME);
 			sch.addStringField("tablename", MAX_NAME);
 			sch.addStringField("fieldname", MAX_NAME);
+			sch.addStringField("indextype", MAX_NAME);
 			tblmgr.createTable("idxcat", sch, tx);
 		}
 		ti = tblmgr.getTableInfo("idxcat", tx);
@@ -57,6 +61,39 @@ public class IndexMgr {
 		rf.setString("fieldname", fldname);
 		rf.close();
 	}
+	
+	public void createIndex(String idxtype, String idxname, String tblname, String fldname,
+			Transaction tx) {
+		RecordFile rf = new RecordFile(ti, tx);
+		rf.insert();
+		rf.setString("indextype", idxtype);
+		rf.setString("indexname", idxname);
+		rf.setString("tablename", tblname);
+		rf.setString("fieldname", fldname);
+		
+		if(idxtype.equals("eh")){
+			TableInfo tableInfo = ExtensibleIndex.getEHTableInfo(idxname);
+			TableScan ts = new TableScan(tableInfo, tx);
+			
+			System.out.println("create index -------------");
+			
+			if(!ts.next()){
+				ts.insert();
+				ts.setInt("depth", 0);
+				ts.setInt("index", -1);
+				ts.setInt("size", 1);
+				ts.setInt("bucketId", -1);
+				
+				ts.insert();
+				ts.setInt("depth", 0);
+				ts.setInt("index", 0);
+				ts.setInt("size", 0);
+				ts.setInt("bucketId", 0);
+			}
+		}
+		
+		rf.close();
+	}
 
 	/**
 	 * Returns a map containing the index info for all indexes on the specified
@@ -73,9 +110,10 @@ public class IndexMgr {
 		RecordFile rf = new RecordFile(ti, tx);
 		while (rf.next())
 			if (rf.getString("tablename").equals(tblname)) {
+				String idxtype = rf.getString("indextype");
 				String idxname = rf.getString("indexname");
 				String fldname = rf.getString("fieldname");
-				IndexInfo ii = new IndexInfo(idxname, tblname, fldname, tx);
+				IndexInfo ii = new IndexInfo(idxtype, idxname, tblname, fldname, tx);
 				result.put(fldname, ii);
 			}
 		rf.close();
