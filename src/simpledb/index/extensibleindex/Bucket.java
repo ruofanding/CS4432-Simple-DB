@@ -11,7 +11,7 @@ import simpledb.record.TableInfo;
 import simpledb.tx.Transaction;
 
 public class Bucket {
-	final int BUCKET_SIZE = 10;
+	final int BUCKET_SIZE = 100;
 	int depth;
 	int id;
 	int size;

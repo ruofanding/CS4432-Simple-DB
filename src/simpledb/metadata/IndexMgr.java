@@ -75,8 +75,6 @@ public class IndexMgr {
 			TableInfo tableInfo = ExtensibleIndex.getEHTableInfo(idxname);
 			TableScan ts = new TableScan(tableInfo, tx);
 			
-			System.out.println("create index -------------");
-			
 			if(!ts.next()){
 				ts.insert();
 				ts.setInt("depth", 0);

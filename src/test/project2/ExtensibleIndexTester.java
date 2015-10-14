@@ -40,7 +40,7 @@ public class ExtensibleIndexTester {
 			int[] majors = new int[SIZE];
 			int[] years = new int[SIZE];
 
-			Transaction tx;
+Transaction tx;
 			Planner p;
 			Scan s;
 			Plan plan;
@@ -56,6 +56,7 @@ public class ExtensibleIndexTester {
 			tx.commit();
 
 			//Create index
+			
 			tx = new Transaction();
 			SimpleDB.planner().executeUpdate(
 					"create eh index myIndex on STUDENT (SId)", tx);
@@ -76,6 +77,7 @@ public class ExtensibleIndexTester {
 				tx.commit();
 			}
 
+			SimpleDB.fileMgr().initIOCounter();
 			//Select data
 			System.out.println("-----QUery------");
 			String qry = "select SId, SName, MajorId, GradYear from STUDENT where SId = ";
@@ -104,6 +106,7 @@ public class ExtensibleIndexTester {
 				}
 				s.close();
 			}
+			System.out.println(SimpleDB.fileMgr().getReadCounter() + " " + SimpleDB.fileMgr().getWriteCounter());
 			tx.commit();
 
 			System.out.println("---------Result----------");
