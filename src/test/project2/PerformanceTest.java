@@ -1,5 +1,6 @@
 package test.project2;
 
+import java.util.Date;
 import java.util.Random;
 
 import simpledb.buffer.Policy;
@@ -44,10 +45,15 @@ public class PerformanceTest {
 				if (i != 5) {
 					rand = new Random(1);// ensure every table gets the same
 											// data
+					int percentage = 0;
 					for (int j = 0; j < maxSize; j++) {
+						if(j > maxSize * percentage / 100){
+							percentage = percentage++;
+							System.out.println("Test" + i + " insertion finishes " + percentage + "% at " + (new Date()));
+						}
 						p.executeUpdate("insert into test" + i
-								+ " (a1,a2) values(" + rand.nextInt(5000) + ","
-								+ rand.nextInt(5000) + ")", tx);
+								+ " (a1,a2) values(" + rand.nextInt(100000) + ","
+								+ rand.nextInt(100000) + ")", tx);
 					}
 				} else// case where i=5
 				{

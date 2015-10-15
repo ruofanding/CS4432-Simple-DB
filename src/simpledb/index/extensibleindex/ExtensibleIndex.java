@@ -59,13 +59,14 @@ public class ExtensibleIndex implements Index{
 		this.idxname = idxname;
 		this.sch = sch;
 		this.tx = tx;
-		
+		cache = null;
 		if(cache != null && cache.idxname == idxname){
 			this.size = cache.size;
 			this.depth = cache.depth;
 			this.bucketList = cache.bucketList;
 			return;
 		}
+		
 
 		TableInfo ti = getEHTableInfo(idxname);
 		TableScan ts = new TableScan(ti, tx);
@@ -81,7 +82,7 @@ public class ExtensibleIndex implements Index{
 			System.err.println("No extensible index created");
 		}
 		
-				bucketList = new ArrayList<Bucket>();
+		bucketList = new ArrayList<Bucket>();
 		while(ts.next()){
 			Bucket newBucket= new Bucket(ts.getInt("bucketId"), ts.getInt("depth"), ts.getInt("size"), idxname, sch, tx);
 			bucketList.add(newBucket);
@@ -101,7 +102,21 @@ public class ExtensibleIndex implements Index{
 	}
 	
 	public void beforeFirst(Constant searchkey) {
-		Bucket currentBucket = bucketList.get(searchkey.hashCode() % size);
+		Bucket currentBucket2 = bucketList.get(searchkey.hashCode() % size);
+		
+		TableInfo ti = getEHTableInfo(idxname);
+		TableScan ts = new TableScan(ti, tx);
+		int index = searchkey.hashCode() % size;
+
+		System.out.println(size + " " +index);
+		ts.beforeFirst();
+		ts.next();
+		for(int i = 0; i <= index; i++){
+			if(!ts.next()){
+				return;
+			}
+		}
+		Bucket currentBucket = new Bucket(ts.getInt("bucketId"), ts.getInt("depth"), ts.getInt("size"), idxname, sch, tx);
 		currentIterator = currentBucket.getDataRid(searchkey).iterator();
 	}
 

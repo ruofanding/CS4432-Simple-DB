@@ -120,7 +120,7 @@ public class SimpleDB {
 	 * @return the system's planner for SQL commands
 	 */
 	public static Planner planner() {
-		QueryPlanner qplanner = new BasicQueryPlanner();
+		QueryPlanner qplanner = new HeuristicQueryPlanner();//new BasicQueryPlanner();
 		UpdatePlanner uplanner = new IndexUpdatePlanner();//new BasicUpdatePlanner();
 		return new Planner(qplanner, uplanner);
 	}
