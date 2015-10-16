@@ -19,6 +19,7 @@ public class Transaction {
 	private ConcurrencyMgr concurMgr;
 	private int txnum;
 	private BufferList myBuffers = new BufferList();
+	private static boolean printEnable = true;
 
 	/**
 	 * Creates a new transaction and its associated recovery and concurrency
@@ -45,7 +46,8 @@ public class Transaction {
 		recoveryMgr.commit();
 		concurMgr.release();
 		myBuffers.unpinAll();
-		System.out.println("transaction " + txnum + " committed");
+		if(printEnable)
+			System.out.println("transaction " + txnum + " committed");
 	}
 
 	/**
@@ -57,7 +59,8 @@ public class Transaction {
 		recoveryMgr.rollback();
 		concurMgr.release();
 		myBuffers.unpinAll();
-		System.out.println("transaction " + txnum + " rolled back");
+		if(printEnable)
+			System.out.println("transaction " + txnum + " rolled back");
 	}
 
 	/**
@@ -202,10 +205,15 @@ public class Transaction {
 		unpin(blk);
 		return blk;
 	}
+	
+	public static void disablePrint(){
+		printEnable = false;
+	}
 
 	private static synchronized int nextTxNumber() {
 		nextTxNum++;
-		System.out.println("new transaction: " + nextTxNum);
+		if(printEnable)
+			System.out.println("new transaction: " + nextTxNum);
 		return nextTxNum;
 	}
 }

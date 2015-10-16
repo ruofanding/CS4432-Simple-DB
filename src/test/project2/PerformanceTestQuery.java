@@ -1,5 +1,7 @@
 package test.project2;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 import simpledb.buffer.Policy;
@@ -16,27 +18,42 @@ public class PerformanceTestQuery {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) throws Exception{
+	public static void main(String[] args) throws Exception {
 		Transaction tx;
 		Planner p;
 
-		//Initialize database
+		// Initialize database
 		SimpleDB.init("performancedb", Policy.clock);
 
 		FileMgr fileManager = SimpleDB.fileMgr();
-		Random rand = null;
-			for(int i = 1; i <= 5; i++){
+		Transaction.disablePrint();
+		long start;
+		Random rand = new Random(2);
+		List<Integer> testValues = new LinkedList<Integer>();
+		for (int i = 0; i < 50; i++) {
+			testValues.add(rand.nextInt(100000));
+		}
+
+		for (int i = 1; i <= 5; i++) {
+			System.out.println("Test" + i);
+			for (Integer val : testValues) {
+				fileManager.initIOCounter();
+				start = System.nanoTime();
+
 				p = SimpleDB.planner();
 				tx = new Transaction();
-
-				fileManager.initIOCounter();
-				Plan plan = p.createQueryPlan("Select a1, a2 from test" + i + " Where a1 = 42", tx);
+				Plan plan = p.createQueryPlan("Select a1, a2 from test" + i
+						+ " Where a1 = " + val, tx);
 				Scan scan = plan.open();
-				while(scan.next()){
+				while (scan.next()) {
 					;
 				}
 				tx.commit();
-				System.out.println("Test" + i + ": " + fileManager.getReadCounter() + " " + fileManager.getWriteCounter());
+				System.out.println("\n"+fileManager.getReadCounter() + ", "
+						+ fileManager.getWriteCounter() + ", "
+						+ (System.nanoTime() - start));
 			}
+			System.out.println();
+		}
 	}
 }

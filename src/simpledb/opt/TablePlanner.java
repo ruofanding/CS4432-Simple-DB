@@ -1,13 +1,20 @@
 package simpledb.opt;
 
-import simpledb.tx.Transaction;
-import simpledb.record.Schema;
-import simpledb.query.*;
-import simpledb.index.query.*;
+import java.util.Map;
+
+import simpledb.index.query.IndexJoinPlan;
+import simpledb.index.query.IndexSelectPlan;
+import simpledb.materialize.MergeJoinPlan;
 import simpledb.metadata.IndexInfo;
 import simpledb.multibuffer.MultiBufferProductPlan;
+import simpledb.query.Constant;
+import simpledb.query.Plan;
+import simpledb.query.Predicate;
+import simpledb.query.SelectPlan;
+import simpledb.query.TablePlan;
+import simpledb.record.Schema;
 import simpledb.server.SimpleDB;
-import java.util.Map;
+import simpledb.tx.Transaction;
 
 /**
  * This class contains methods for planning a single table.
@@ -74,6 +81,10 @@ class TablePlanner {
 		if (p == null)
 			p = makeProductJoin(current, currsch);
 		return p;
+	}
+
+	public Plan makeMergeJoinPlan(Plan current) {
+		return new MergeJoinPlan(current, myplan, null, null, tx);
 	}
 
 	/**

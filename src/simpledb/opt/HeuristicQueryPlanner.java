@@ -46,7 +46,7 @@ public class HeuristicQueryPlanner implements QueryPlanner {
 		return new ProjectPlan(currentplan, data.fields());
 	}
 
-	private Plan getLowestSelectPlan() {
+	protected Plan getLowestSelectPlan() {
 		TablePlanner besttp = null;
 		Plan bestplan = null;
 		for (TablePlanner tp : tableplanners) {
@@ -78,7 +78,7 @@ public class HeuristicQueryPlanner implements QueryPlanner {
 		return bestplan;
 	}
 
-	private Plan getLowestProductPlan(Plan current) {
+	protected Plan getLowestProductPlan(Plan current) {
 		TablePlanner besttp = null;
 		Plan bestplan = null;
 		for (TablePlanner tp : tableplanners) {
