@@ -48,6 +48,7 @@ class TablePlanner {
 		myschema = myplan.schema();
 		indexes = SimpleDB.mdMgr().getIndexInfo(tblname, tx);
 	}
+	
 
 	/**
 	 * Constructs a select plan for the table. The plan will use an indexselect,
@@ -75,6 +76,8 @@ class TablePlanner {
 	public Plan makeJoinPlan(Plan current) {
 		Schema currsch = current.schema();
 		Predicate joinpred = mypred.joinPred(myschema, currsch);
+		String mycolumn;
+
 		if (joinpred == null)
 			return null;
 		Plan p = makeIndexJoin(current, currsch);
@@ -84,7 +87,20 @@ class TablePlanner {
 	}
 
 	public Plan makeMergeJoinPlan(Plan current) {
-		return new MergeJoinPlan(current, myplan, null, null, tx);
+		Predicate joinpred = mypred.joinPred(myschema, current.schema());
+
+		if (joinpred != null) {
+			String currentField = null, myField = null;
+			for (String field : myschema.fields()) {
+				if(joinpred.equatesWithField(field) != null){
+					currentField = joinpred.equatesWithField(field);
+					myField = field;
+					break;
+				}
+			}
+			return new MergeJoinPlan(current, myplan, currentField, myField, tx);
+		}
+		return null;
 	}
 
 	/**

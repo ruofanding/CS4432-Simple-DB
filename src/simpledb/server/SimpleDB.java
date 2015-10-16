@@ -6,6 +6,7 @@ import simpledb.tx.Transaction;
 import simpledb.log.LogMgr;
 import simpledb.metadata.MetadataMgr;
 import simpledb.planner.*;
+import simpledb.opt.ExploitSortQueryPlanner;
 import simpledb.opt.HeuristicQueryPlanner;
 import simpledb.index.planner.IndexUpdatePlanner;
 
@@ -120,7 +121,7 @@ public class SimpleDB {
 	 * @return the system's planner for SQL commands
 	 */
 	public static Planner planner() {
-		QueryPlanner qplanner = new HeuristicQueryPlanner();//new BasicQueryPlanner();
+		QueryPlanner qplanner = new ExploitSortQueryPlanner(); // HeuristicQueryPlanner();//new BasicQueryPlanner();
 		UpdatePlanner uplanner = new IndexUpdatePlanner();//new BasicUpdatePlanner();
 		return new Planner(qplanner, uplanner);
 	}

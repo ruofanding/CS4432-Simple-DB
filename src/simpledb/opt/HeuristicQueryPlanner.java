@@ -13,7 +13,7 @@ import java.util.*;
  * @author Edward Sciore
  */
 public class HeuristicQueryPlanner implements QueryPlanner {
-	private Collection<TablePlanner> tableplanners = new ArrayList<TablePlanner>();
+	Collection<TablePlanner> tableplanners = new ArrayList<TablePlanner>();
 
 	/**
 	 * Creates an optimized left-deep query plan using the following heuristics.
