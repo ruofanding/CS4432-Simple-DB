@@ -35,12 +35,13 @@ public class ExtensibleIndexTester {
 
 	public static void main(String[] args) {
 		try {
-			int SIZE = 2000;
+			int SIZE = 10000;
+			int[] id = new int[SIZE];
 			String[] names = new String[SIZE];
 			int[] majors = new int[SIZE];
 			int[] years = new int[SIZE];
 
-Transaction tx;
+			Transaction tx;
 			Planner p;
 			Scan s;
 			Plan plan;
@@ -68,11 +69,13 @@ Transaction tx;
 			p = SimpleDB.planner();
 			for (int i = 0; i < SIZE; i++) {
 				tx = new Transaction();
+				id[i] = r.nextInt(SIZE);
 				names[i] = getRandomName(r);
 				years[i] = 2000 + r.nextInt(15);
 				majors[i] = (r.nextInt(3) + 1) * 10;
-				String studentData = "(" + i + ", '" + names[i] + "', " + majors[i]
+				String studentData = "(" + id[i] + ", '" + names[i] + "', " + majors[i]
 						+ ", " + years[i] + ")";
+				
 				p.executeUpdate(insertStudents + studentData, tx);
 				tx.commit();
 			}
@@ -81,11 +84,12 @@ Transaction tx;
 			//Select data
 			System.out.println("-----QUery------");
 			String qry = "select SId, SName, MajorId, GradYear from STUDENT where SId = ";
+
 			boolean matched = true;
-			tx = new Transaction();
 			for (int i = 0; i < SIZE; i++) {
+				tx = new Transaction();
 				p = SimpleDB.planner();
-				plan = p.createQueryPlan(qry + i, tx);
+				plan = p.createQueryPlan(qry + id[i], tx);
 				s = plan.open();
 
 				if (s.next()) {
@@ -105,6 +109,7 @@ Transaction tx;
 					matched = false;
 				}
 				s.close();
+				tx.commit();
 			}
 			System.out.println(SimpleDB.fileMgr().getReadCounter() + " " + SimpleDB.fileMgr().getWriteCounter());
 			tx.commit();

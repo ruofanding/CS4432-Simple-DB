@@ -11,26 +11,28 @@ import simpledb.record.TableInfo;
 import simpledb.tx.Transaction;
 
 public class Bucket {
-	final int BUCKET_SIZE = 100;
+	final int BUCKET_SIZE = 200; 
 	int depth;
-	int id;
+	int key;
+	int pos;
 	int size;
 	private String tblname;
 	private Schema sch;
 	private Transaction tx;
 	
-	public Bucket(int id, int depth, int size, String tblname, Schema sch, Transaction tx){
+	public Bucket(int id, int depth, int size, int pos, String tblname, Schema sch, Transaction tx){
 		this.tblname = tblname;
 		this.sch = sch;
-		this.id = id;
+		this.key = id;
 		this.tx = tx;
 		
 		this.size = size;
 		this.depth = depth;
+		this.pos = pos;
 	}
 	
 	public void insert(Constant dataval, RID datarid) {
-		TableInfo ti = new TableInfo(tblname + id, sch);
+		TableInfo ti = new TableInfo(tblname + key, sch);
 		TableScan ts = new TableScan(ti, tx);
 		ts.insert();
 		ts.setInt("block", datarid.blockNumber());
@@ -42,7 +44,7 @@ public class Bucket {
 	
 	public List<RID> getDataRid(Constant dataval){
 		List<RID> result = new ArrayList<RID>();
-		TableInfo ti = new TableInfo(tblname + id, sch);
+		TableInfo ti = new TableInfo(tblname + key, sch);
 		TableScan ts = new TableScan(ti, tx);
 		
 		while(ts.next()){
@@ -60,7 +62,7 @@ public class Bucket {
 	}
 	
 	public void delete(Constant dataval, RID datarid) {
-		TableInfo ti = new TableInfo(tblname + id, sch);
+		TableInfo ti = new TableInfo(tblname + key, sch);
 		TableScan ts = new TableScan(ti, tx);
 		
 		while(ts.next()){
@@ -81,10 +83,10 @@ public class Bucket {
 		return size >= BUCKET_SIZE;
 	}
 	
-	public List<BucketEntry> redistribute(){
-		TableInfo ti = new TableInfo(tblname + id, sch);
+	public List<DataEntry> redistribute(){
+		TableInfo ti = new TableInfo(tblname + key, sch);
 		TableScan ts = new TableScan(ti, tx);
-		List<BucketEntry> result = new ArrayList<BucketEntry>();
+		List<DataEntry> result = new ArrayList<DataEntry>();
 		while(ts.next()){
 			int blknum = ts.getInt("block");
 			int id = ts.getInt("id");
@@ -92,9 +94,9 @@ public class Bucket {
 			RID rid = new RID(blknum, id);
 			
 			int index = val.hashCode() % (1 << (depth + 1));
-			if(index != this.id){
+			if(index != this.key){
 				ts.delete();
-				result.add(new BucketEntry(val, rid));
+				result.add(new DataEntry(val, rid));
 			}
 		}
 		
@@ -105,7 +107,7 @@ public class Bucket {
 	}
 
 	public String toString(){
-		return ("Id=" + this.id + ", size=" + size + ", depth" + depth);
+		return ("Id=" + this.key + ", size=" + size + ", depth" + depth);
 	}
 	
 }

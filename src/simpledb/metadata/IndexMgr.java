@@ -72,22 +72,7 @@ public class IndexMgr {
 		rf.setString("fieldname", fldname);
 		
 		if(idxtype.equals("eh")){
-			TableInfo tableInfo = ExtensibleIndex.getEHTableInfo(idxname);
-			TableScan ts = new TableScan(tableInfo, tx);
-			
-			if(!ts.next()){
-				ts.insert();
-				ts.setInt("depth", 0);
-				ts.setInt("index", -1);
-				ts.setInt("size", 1);
-				ts.setInt("bucketId", -1);
-				
-				ts.insert();
-				ts.setInt("depth", 0);
-				ts.setInt("index", 0);
-				ts.setInt("size", 0);
-				ts.setInt("bucketId", 0);
-			}
+			ExtensibleIndex.init(idxname, tx);
 		}
 		
 		rf.close();

@@ -40,7 +40,7 @@ public class PerformanceTest {
 			p.executeUpdate("create eh index idx2 on test2 (a1)", tx);
 			p.executeUpdate("create bt index idx3 on test3 (a1)", tx);
 			tx.commit();
-			for (int i = 1; i < 6; i++) {
+			for (int i = 2; i < 6; i++) {
 				tx = new Transaction();
 				if (i != 5) {
 					rand = new Random(1);// ensure every table gets the same
@@ -48,7 +48,7 @@ public class PerformanceTest {
 					int percentage = 0;
 					for (int j = 0; j < maxSize; j++) {
 						if(j > maxSize * percentage / 100){
-							percentage = percentage++;
+							percentage++;
 							System.out.println("Test" + i + " insertion finishes " + percentage + "% at " + (new Date()));
 						}
 						p.executeUpdate("insert into test" + i
