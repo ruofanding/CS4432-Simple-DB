@@ -35,8 +35,6 @@ public class SortPlan implements Plan {
 		sch = p.schema();
 		comp = new RecordComparator(sortfields);
 		this.tblname = tblname;
-
-		SortedTableManager sMgr = SortedTableManager.getManager();
 	}
 
 	/**

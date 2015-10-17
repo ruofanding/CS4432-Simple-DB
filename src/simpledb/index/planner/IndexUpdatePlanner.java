@@ -8,6 +8,7 @@ import simpledb.server.SimpleDB;
 import simpledb.tx.Transaction;
 import simpledb.index.Index;
 import simpledb.metadata.IndexInfo;
+import simpledb.opt.SortedTableManager;
 import simpledb.parse.*;
 import simpledb.planner.*;
 import simpledb.query.*;
@@ -21,6 +22,7 @@ import simpledb.query.*;
 public class IndexUpdatePlanner implements UpdatePlanner {
 
 	public int executeInsert(InsertData data, Transaction tx) {
+		SortedTableManager.getManager().setUnSorted(data.tableName());
 		String tblname = data.tableName();
 		Plan p = new TablePlan(tblname, tx);
 

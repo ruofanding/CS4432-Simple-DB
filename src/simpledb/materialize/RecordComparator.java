@@ -9,7 +9,7 @@ import java.util.*;
  * @author Edward Sciore
  */
 public class RecordComparator implements Comparator<Scan> {
-	private List<String> fields;
+	public List<String> fields;
 
 	/**
 	 * Creates a comparator using the specified fields, using the ordering

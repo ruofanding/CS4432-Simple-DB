@@ -13,6 +13,8 @@ import simpledb.tx.Transaction;
 public class MergeJoinTest {
 	static int SIZE = 10;
 	public static void main(String[] argv){
+		Transaction.disablePrint();
+		System.out.println("Commit Info is hidden");
 		SimpleDB.init("mergesorttest", Policy.clock);
 
 		Planner p = SimpleDB.planner();
@@ -65,5 +67,17 @@ public class MergeJoinTest {
 			System.out.println("b1=" + scan.getInt("b1") + ", b2=" + scan.getInt("b2"));
 		}
 		tx.commit();
+
+		tx = new Transaction();
+		System.out.println("-----Do joint one more time!");
+		qry = "Select a1, b1 from test1, test2 Where a2 = b2";
+		plan = p.createQueryPlan("Select a1, b1, a2, b2 from test1, test2 Where a2 = b2", tx);
+		scan = plan.open();
+		System.out.println(qry);
+		while (scan.next()) {
+			System.out.println("a1=" + scan.getInt("a1") + ", b1=" + scan.getInt("b1") + ", a2=b2=" + scan.getInt("b2"));
+		}
+		tx.commit();
+
 	}
 }

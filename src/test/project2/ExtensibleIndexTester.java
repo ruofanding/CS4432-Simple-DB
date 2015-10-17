@@ -69,7 +69,7 @@ public class ExtensibleIndexTester {
 			p = SimpleDB.planner();
 			for (int i = 0; i < SIZE; i++) {
 				tx = new Transaction();
-				id[i] = r.nextInt(SIZE);
+				id[i] = i;
 				names[i] = getRandomName(r);
 				years[i] = 2000 + r.nextInt(15);
 				majors[i] = (r.nextInt(3) + 1) * 10;

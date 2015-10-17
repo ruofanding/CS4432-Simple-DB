@@ -1,5 +1,7 @@
 package simpledb.opt;
 
+import java.util.HashSet;
+
 import simpledb.metadata.TableMgr;
 import simpledb.query.TableScan;
 import simpledb.record.Schema;
@@ -7,8 +9,13 @@ import simpledb.record.TableInfo;
 import simpledb.tx.Transaction;
 
 public class SortedTableManager {
+	private HashSet<String> unsorted;
 	private static SortedTableManager instance = null;
 	
+	private SortedTableManager(){
+		unsorted = new HashSet<String>();
+	}
+
 	public static SortedTableManager getManager(){
 		if(instance == null){
 			instance = new SortedTableManager();
@@ -49,6 +56,10 @@ public class SortedTableManager {
 	}
 
 	public void setSorted(String tblname, String column){
+		if(unsorted.contains(tblname)){
+			unsorted.remove(tblname);
+		}
+
 		Transaction tx = new Transaction();
 		TableScan ts = new TableScan(tableInfo(), tx);
 		boolean set = false;
@@ -66,6 +77,25 @@ public class SortedTableManager {
 			ts.setString("column", column);
 			ts.setInt("sorted", 1);
 		}
+		ts.close();
+		tx.commit();
+	}
+
+	public void setUnSorted(String tblname){
+		if(unsorted.contains(tblname)){
+			return;
+		}
+
+		Transaction tx = new Transaction();
+		TableScan ts = new TableScan(tableInfo(), tx);
+
+		while(ts.next()){
+			if(ts.getString("tblname").equals(tblname)) {
+				ts.setInt("sorted", 0);
+			}
+		}
+
+		unsorted.add(tblname);
 		ts.close();
 		tx.commit();
 	}
