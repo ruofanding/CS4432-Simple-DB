@@ -25,6 +25,9 @@ public class FileMgr {
 	private boolean isNew;
 	private Map<String, FileChannel> openFiles = new HashMap<String, FileChannel>();
 
+	private int readCounter;
+	private int writeCounter;
+
 	/**
 	 * Creates a file manager for the specified database. The database will be
 	 * stored in a folder of that name in the user's home directory. If the
@@ -63,6 +66,7 @@ public class FileMgr {
 			bb.clear();
 			FileChannel fc = getFile(blk.fileName());
 			fc.read(bb, blk.number() * BLOCK_SIZE);
+			readCounter++;
 		} catch (IOException e) {
 			throw new RuntimeException("cannot read block " + blk);
 		}
@@ -81,6 +85,7 @@ public class FileMgr {
 			bb.rewind();
 			FileChannel fc = getFile(blk.fileName());
 			fc.write(bb, blk.number() * BLOCK_SIZE);
+			writeCounter++;
 		} catch (IOException e) {
 			throw new RuntimeException("cannot write block" + blk);
 		}
@@ -147,5 +152,30 @@ public class FileMgr {
 			openFiles.put(filename, fc);
 		}
 		return fc;
+	}
+
+	/** CS4432-Project2:
+	 * Initializes I/O counter for performance testing
+	 * 
+	 */
+	public void initIOCounter(){
+		this.readCounter = 0;
+		this.writeCounter = 0;
+	}
+	
+	/** CS4432-Project2:
+	 *  
+	 * @return read counter
+	 */
+	public int getReadCounter(){
+		return this.readCounter;
+	}
+
+	/** CS4432-Project2:
+	 * 
+	 * @return write counter
+	 */
+	public int getWriteCounter(){
+		return this.writeCounter;
 	}
 }

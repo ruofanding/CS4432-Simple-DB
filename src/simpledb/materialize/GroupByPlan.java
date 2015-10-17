@@ -35,7 +35,7 @@ public class GroupByPlan implements Plan {
 			Collection<AggregationFn> aggfns, Transaction tx) {
 		List<String> grouplist = new ArrayList<String>();
 		grouplist.addAll(groupfields);
-		this.p = new SortPlan(p, grouplist, tx);
+		this.p = new SortPlan(p, grouplist, tx, null);
 		this.groupfields = groupfields;
 		this.aggfns = aggfns;
 		for (String fldname : groupfields)

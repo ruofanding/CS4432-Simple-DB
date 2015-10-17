@@ -1,79 +1,63 @@
 package simpledb.index.extensibleindex;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import simpledb.index.Index;
 import simpledb.query.Constant;
-import simpledb.query.TableScan;
 import simpledb.record.RID;
 import simpledb.record.Schema;
-import simpledb.record.TableInfo;
 import simpledb.tx.Transaction;
 
-public class ExtensibleIndex implements Index{
-	final int INIT_SIZE = 1;
+/** CS4432-Project2:
+ * 
+ * Extensible hash index implementation
+ *
+ */
+public class ExtensibleIndex implements Index {
 	String idxname;
 	Schema sch;
 	Transaction tx;
-	
-	ArrayList<Bucket> bucketList;
-	Bucket currentBucket = null;
+
 	Iterator<RID> currentIterator = null;
 	int depth;
 	int size;
-	
-	public static TableInfo getEHTableInfo(String idxname){
-		Schema indexSchema = new Schema();
-		indexSchema.addIntField("depth");
-		indexSchema.addIntField("bucketId");
-		indexSchema.addIntField("size");
-		indexSchema.addIntField("index");
-		return new TableInfo("ExtensibleIndex" + idxname, indexSchema);
-	}
-	
+	int bucketNum;
+
+	EhGlobal globalManager;
+	BucketEntry bucketEntryManager;
+	BucketList bucketListManager;
+
 	public ExtensibleIndex(String idxname, Schema sch, Transaction tx) {
-		TableInfo ti = getEHTableInfo(idxname);
-		TableScan ts = new TableScan(ti, tx);
-		
-		if(ts.next()){
-			if(ts.getInt("index") == -1){
-				depth = ts.getInt("depth");
-				size = ts.getInt("size");
-			} else {
-				System.err.println("The first record is not for global");
-			}
-		} else {
-			System.err.println("No extensible index created");
-		}
-		
 		this.idxname = idxname;
 		this.sch = sch;
 		this.tx = tx;
-		
-		bucketList = new ArrayList<Bucket>();
-		while(ts.next()){
-			Bucket newBucket= new Bucket(ts.getInt("bucketId"), ts.getInt("depth"), ts.getInt("size"), idxname, sch, tx);
-			bucketList.add(newBucket);
-		}
-	}
 
-	public String toString(){
-		StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < bucketList.size(); i++){
-			sb.append("[" + i + "]:" + bucketList.get(i).toString());
-			sb.append("\n");
-		}
-        return sb.toString();
+		globalManager = new EhGlobal(idxname, sch, tx);
+		this.depth = globalManager.getDepth();
+		this.size = 1 << this.depth;
+		bucketNum = globalManager.getBucketNum();
+
+		bucketEntryManager = new BucketEntry(idxname, tx);
+		bucketListManager = new BucketList(idxname, sch, tx);
 	}
 	
+	public static void init(String idxname, Transaction tx){
+		EhGlobal.init(idxname, tx);
+		BucketEntry.init(idxname, tx);
+		BucketList.init(idxname, tx);
+	}
+	
+	public void debug() {
+		System.out.print(globalManager.toString());
+		System.out.print(bucketEntryManager.toString());
+		System.out.println(bucketListManager.toString());
+	}
+
 	public void beforeFirst(Constant searchkey) {
-		close();
-		int index = searchkey.hashCode() % (1<<depth);
-		currentBucket = bucketList.get(index);
+		int index = searchkey.hashCode() % size;
+		int pos = bucketEntryManager.getBucketPos(index);
+		Bucket currentBucket = bucketListManager.getBucket(pos);
 		currentIterator = currentBucket.getDataRid(searchkey).iterator();
 	}
 
@@ -87,73 +71,59 @@ public class ExtensibleIndex implements Index{
 		return currentIterator.next();
 	}
 
+	/** CS4432-Project2:
+	 * Used to insert new values
+	 */
 	@Override
 	public void insert(Constant dataval, RID datarid) {
-		currentBucket = bucketList.get(dataval.hashCode() % size);
-		while(currentBucket.isFull()){
-			if(currentBucket.depth == this.depth){
-				for(int i = 0; i < size ; i++){
-					bucketList.add(bucketList.get(i));
-				}
-				size = size * 2;
+		int index = dataval.hashCode() % this.size;
+		int pos = this.bucketEntryManager.getBucketPos(index);
+		
+		Bucket currentBucket = bucketListManager.getBucket(pos);
+		while (currentBucket.isFull()) {
+			if (currentBucket.depth == this.depth) {
+				bucketEntryManager.expandEntry();
+				this.size = size * 2;
 				this.depth++;
+				globalManager.updateDepth(depth);
 			}
-			
-			List<BucketEntry> bucketEntries = currentBucket.redistribute();
-			Bucket newBucket = new Bucket(currentBucket.id + (1<< (currentBucket.depth - 1)), currentBucket.depth, 0, idxname, sch, tx);
-			for(BucketEntry entry : bucketEntries){
+
+			List<DataEntry> bucketEntries = currentBucket.redistribute();
+			globalManager.updateBucketNum(++bucketNum);
+			Bucket newBucket = new Bucket(currentBucket.key
+					+ (1 << (currentBucket.depth - 1)), currentBucket.depth, 0, bucketNum-1, 
+					idxname, sch, tx);
+			for (DataEntry entry : bucketEntries) {
 				newBucket.insert(entry.dataval, entry.datarid);
 			}
-			bucketList.set(newBucket.id, newBucket);
-			
-			int index = dataval.hashCode() % size;
-			currentBucket = bucketList.get(index);
-		}
-		
-		currentBucket.insert(dataval, datarid);
-		TableInfo ti = getEHTableInfo(idxname);
-		TableScan ts = new TableScan(ti, tx);
-		ts.beforeFirst();
-		
-		if(ts.next() && ts.getInt("index") == -1){
-			ts.setInt("size", this.size);
-			ts.setInt("depth", this.depth);
-		} else {
-			System.err.println("Global record does not exist");
-		}
-		
 
-		for(int i = 0; i < bucketList.size(); i++){
-			Bucket b = bucketList.get(i);
-			if(ts.next()){
-				if(ts.getInt("index") == i){
-					ts.setInt("depth", b.depth);
-					ts.setInt("size", b.size);
-					ts.setInt("bucketId", b.id);
-				}else{
-					System.err.println("Index doesn't match");
-				}
-			} else {
-				ts.insert();
-				ts.setInt("index", i);
-				ts.setInt("depth", b.depth);
-				ts.setInt("size", b.size);
-				ts.setInt("bucketId", b.id);
-			}
+			bucketEntryManager.updateEntry(currentBucket);
+			bucketListManager.updateBucket(currentBucket);
+
+			bucketListManager.insertNewBucket(newBucket);
+			bucketEntryManager.updateEntry(newBucket);
+
+			index = dataval.hashCode() % size;
+			pos = bucketEntryManager.getBucketPos(index);
+			currentBucket = bucketListManager.getBucket(pos);
 		}
+
+		currentBucket.insert(dataval, datarid);
+		bucketListManager.updateBucket(currentBucket);
 	}
 
 	@Override
 	public void delete(Constant dataval, RID datarid) {
-		currentBucket = bucketList.get(dataval.hashCode() % size);
+		int index = dataval.hashCode() % size;
+		int pos = bucketEntryManager.getBucketPos(index);
+		Bucket currentBucket = bucketListManager.getBucket(pos);
+		
 		currentBucket.delete(dataval, datarid);
+		bucketListManager.updateBucket(currentBucket);
 	}
 
 	@Override
 	public void close() {
-		if(currentBucket != null){
-			currentBucket = null;
-		}
 		currentIterator = null;
 	}
 

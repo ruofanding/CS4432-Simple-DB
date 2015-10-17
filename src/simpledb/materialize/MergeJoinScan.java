@@ -11,6 +11,7 @@ public class MergeJoinScan implements Scan {
 	private Scan s1;
 	private SortScan s2;
 	private String fldname1, fldname2;
+	private String tblname1, tlbname2;
 	private Constant joinval = null;
 
 	/**
@@ -25,11 +26,13 @@ public class MergeJoinScan implements Scan {
 	 * @param fldname2
 	 *            the RHS join field
 	 */
-	public MergeJoinScan(Scan s1, SortScan s2, String fldname1, String fldname2) {
+	public MergeJoinScan(Scan s1, SortScan s2, String fldname1, String fldname2, String tblname1, String tblname2) {
 		this.s1 = s1;
 		this.s2 = s2;
 		this.fldname1 = fldname1;
 		this.fldname2 = fldname2;
+		this.tblname1 = tblname1;
+		this.tlbname2 = tblname2;
 		beforeFirst();
 	}
 

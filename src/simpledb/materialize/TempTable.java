@@ -14,7 +14,7 @@ import simpledb.query.*;
 public class TempTable {
 	private static int nextTableNum = 0;
 	private TableInfo ti;
-	private Transaction tx;
+	public Transaction tx;
 
 	/**
 	 * Allocates a name for for a new temporary table having the specified

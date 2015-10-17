@@ -1,13 +1,20 @@
 package simpledb.opt;
 
-import simpledb.tx.Transaction;
-import simpledb.record.Schema;
-import simpledb.query.*;
-import simpledb.index.query.*;
+import java.util.Map;
+
+import simpledb.index.query.IndexJoinPlan;
+import simpledb.index.query.IndexSelectPlan;
+import simpledb.materialize.MergeJoinPlan;
 import simpledb.metadata.IndexInfo;
 import simpledb.multibuffer.MultiBufferProductPlan;
+import simpledb.query.Constant;
+import simpledb.query.Plan;
+import simpledb.query.Predicate;
+import simpledb.query.SelectPlan;
+import simpledb.query.TablePlan;
+import simpledb.record.Schema;
 import simpledb.server.SimpleDB;
-import java.util.Map;
+import simpledb.tx.Transaction;
 
 /**
  * This class contains methods for planning a single table.
@@ -20,6 +27,7 @@ class TablePlanner {
 	private Schema myschema;
 	private Map<String, IndexInfo> indexes;
 	private Transaction tx;
+	public String tblname;
 
 	/**
 	 * Creates a new table planner. The specified predicate applies to the
@@ -40,7 +48,9 @@ class TablePlanner {
 		myplan = new TablePlan(tblname, tx);
 		myschema = myplan.schema();
 		indexes = SimpleDB.mdMgr().getIndexInfo(tblname, tx);
+		this.tblname = tblname;
 	}
+	
 
 	/**
 	 * Constructs a select plan for the table. The plan will use an indexselect,
@@ -68,12 +78,36 @@ class TablePlanner {
 	public Plan makeJoinPlan(Plan current) {
 		Schema currsch = current.schema();
 		Predicate joinpred = mypred.joinPred(myschema, currsch);
+
 		if (joinpred == null)
 			return null;
 		Plan p = makeIndexJoin(current, currsch);
 		if (p == null)
 			p = makeProductJoin(current, currsch);
 		return p;
+	}
+
+	/**
+	 * CS4432-Project2: after merge the table will be sorted.
+	 * @param current
+	 * @param tblname
+	 * @return
+	 */
+	public Plan makeMergeJoinPlan(Plan current, String tblname) {
+		Predicate joinpred = mypred.joinPred(myschema, current.schema());
+
+		if (joinpred != null) {
+			String currentField = null, myField = null;
+			for (String field : myschema.fields()) {
+				if(joinpred.equatesWithField(field) != null){
+					currentField = joinpred.equatesWithField(field);
+					myField = field;
+					break;
+				}
+			}
+			return new MergeJoinPlan(current, myplan, currentField, myField, tblname, this.tblname, tx);
+		}
+		return null;
 	}
 
 	/**

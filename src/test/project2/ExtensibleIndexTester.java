@@ -1,6 +1,7 @@
 package test.project2;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Random;
 
 import simpledb.buffer.Policy;
@@ -20,10 +21,10 @@ import simpledb.tx.Transaction;
  */
 
 /**
- * CS4432-Project1: Test for Clock policy
+ * CS4432-Project2: Test for ExtensibleIndexTester
  *
  */
-public class IndexTester {
+public class ExtensibleIndexTester {
 	private static String getRandomName(Random r) {
 		StringBuilder s = new StringBuilder();
 		for (int i = 0; i < 7; i++) {
@@ -34,69 +35,64 @@ public class IndexTester {
 
 	public static void main(String[] args) {
 		try {
-			int SIZE = 1000;
+			int SIZE = 2000;
+			int[] id = new int[SIZE];
 			String[] names = new String[SIZE];
 			int[] majors = new int[SIZE];
 			int[] years = new int[SIZE];
 
-			// analogous to the driver
+			Transaction tx;
+			Planner p;
+			Scan s;
+			Plan plan;
+			Random r = new Random(0);
+
+			//Initialize database
 			SimpleDB.init("studentdb", Policy.clock);
 
-			// analogous to the connection
-			Transaction tx;
-
+			//Create table
 			tx = new Transaction();
 			String studentTable = "create table STUDENT(SId int, SName varchar(10), MajorId int, GradYear int)";
 			SimpleDB.planner().executeUpdate(studentTable, tx);
 			tx.commit();
 
+			//Create index
+			
 			tx = new Transaction();
 			SimpleDB.planner().executeUpdate(
 					"create eh index myIndex on STUDENT (SId)", tx);
-
 			tx.commit();
 
-			// analogous to the statement
-
+			//Insert data
 			String insertStudents = "insert into STUDENT(SId, SName, MajorId, GradYear) values ";
-
-			ArrayList<Integer> majorIdList = new ArrayList<Integer>();
-			majorIdList.add(10);
-			majorIdList.add(20);
-			majorIdList.add(30);
-
-			String studentData = new String();
 			SimpleDB.bufferMgr().disableDebug();
-			Planner pp = SimpleDB.planner();
-			Random r = new Random(0);
-			tx = new Transaction();
+			p = SimpleDB.planner();
 			for (int i = 0; i < SIZE; i++) {
+				tx = new Transaction();
+				id[i] = i;
 				names[i] = getRandomName(r);
 				years[i] = 2000 + r.nextInt(15);
-				majors[i] = majorIdList.get(r.nextInt(3));
-				studentData = "(" + i + ", '" + names[i] + "', " + majors[i]
+				majors[i] = (r.nextInt(3) + 1) * 10;
+				String studentData = "(" + id[i] + ", '" + names[i] + "', " + majors[i]
 						+ ", " + years[i] + ")";
-				pp.executeUpdate(insertStudents + studentData,
-						tx);
+				
+				p.executeUpdate(insertStudents + studentData, tx);
+				tx.commit();
 			}
-			tx.commit();
 
+			SimpleDB.fileMgr().initIOCounter();
+			//Select data
+			System.out.println("-----QUery------");
 			String qry = "select SId, SName, MajorId, GradYear from STUDENT where SId = ";
 
-			Planner p;
-			Scan s;
-			Plan plan;
-
 			boolean matched = true;
-			System.out.println("-----QUery------");
 			for (int i = 0; i < SIZE; i++) {
 				tx = new Transaction();
 				p = SimpleDB.planner();
-				plan = p.createQueryPlan(qry + i, tx);
-
+				plan = p.createQueryPlan(qry + id[i], tx);
 				s = plan.open();
 
-				while (s.next()) {
+				if (s.next()) {
 					if (!s.getString("sname").equals(names[i])) {
 						matched = false;
 						System.out.println("Name does not match");
@@ -109,10 +105,14 @@ public class IndexTester {
 						matched = false;
 						System.out.println("Year does not match");
 					}
+				} else {
+					matched = false;
 				}
 				s.close();
 				tx.commit();
 			}
+			System.out.println(SimpleDB.fileMgr().getReadCounter() + " " + SimpleDB.fileMgr().getWriteCounter());
+			tx.commit();
 
 			System.out.println("---------Result----------");
 			if (matched) {
@@ -120,7 +120,7 @@ public class IndexTester {
 			} else {
 				System.out.println("Data not matched");
 			}
-
+			
 			tx = new Transaction();
 			SimpleDB.planner().executeUpdate("DELETE FROM STUDENT", tx);
 			tx.commit();

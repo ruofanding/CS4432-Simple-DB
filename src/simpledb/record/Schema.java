@@ -1,6 +1,7 @@
 package simpledb.record;
 
 import static java.sql.Types.*;
+
 import java.util.*;
 
 /**
@@ -136,5 +137,13 @@ public class Schema {
 			this.type = type;
 			this.length = length;
 		}
+	}
+
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+		for(String field: this.fields()){
+			sb.append(field + ", ");
+		}
+		return sb.toString();
 	}
 }

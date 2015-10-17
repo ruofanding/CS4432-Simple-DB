@@ -1,6 +1,8 @@
 package simpledb.tx.concurrency;
 
 import simpledb.file.Block;
+import simpledb.server.SimpleDB;
+
 import java.util.*;
 
 /**

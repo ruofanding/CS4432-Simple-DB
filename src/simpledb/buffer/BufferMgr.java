@@ -77,8 +77,11 @@ public class BufferMgr {
 				wait(MAX_TIME);
 				buff = bufferMgr.pin(blk);
 			}
-			if (buff == null)
+			if (buff == null){
+				System.err.println(this.bufferMgr.toString());
 				throw new BufferAbortException();
+			}
+
 			
 			
 			/**
