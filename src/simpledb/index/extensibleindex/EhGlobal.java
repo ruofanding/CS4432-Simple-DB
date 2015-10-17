@@ -5,6 +5,12 @@ import simpledb.record.Schema;
 import simpledb.record.TableInfo;
 import simpledb.tx.Transaction;
 
+/**
+ * CS4432-Project2:
+ * Metadata containing index name, transaction and schema
+ * to be used with extensible hash index
+ *
+ */
 public class EhGlobal {
 	String idxname;
 	Transaction tx;

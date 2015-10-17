@@ -10,6 +10,10 @@ import simpledb.record.Schema;
 import simpledb.record.TableInfo;
 import simpledb.tx.Transaction;
 
+/** CS4432-Project2:
+ * Buckets are used to store entries when extensible hash index is used
+ *
+ */
 public class Bucket {
 	final int BUCKET_SIZE = 200; 
 	int depth;
@@ -31,6 +35,11 @@ public class Bucket {
 		this.pos = pos;
 	}
 	
+	/** CS4432-Project2:
+	 * Insert a new value to the bucket
+	 * @param dataval 
+	 * @param datarid
+	 */
 	public void insert(Constant dataval, RID datarid) {
 		TableInfo ti = new TableInfo(tblname + key, sch);
 		TableScan ts = new TableScan(ti, tx);
@@ -61,6 +70,11 @@ public class Bucket {
 		return result;
 	}
 	
+	/** CS4432-Project2:
+	 * Delete a value from a bucket
+	 * @param dataval
+	 * @param datarid
+	 */
 	public void delete(Constant dataval, RID datarid) {
 		TableInfo ti = new TableInfo(tblname + key, sch);
 		TableScan ts = new TableScan(ti, tx);
@@ -83,6 +97,11 @@ public class Bucket {
 		return size >= BUCKET_SIZE;
 	}
 	
+	/** CS4432-Project2:
+	 * Redistribute entries in a bucket if bucket is full
+	 * after expanding.
+	 * @return
+	 */
 	public List<DataEntry> redistribute(){
 		TableInfo ti = new TableInfo(tblname + key, sch);
 		TableScan ts = new TableScan(ti, tx);

@@ -9,6 +9,11 @@ import simpledb.record.RID;
 import simpledb.record.Schema;
 import simpledb.tx.Transaction;
 
+/** CS4432-Project2:
+ * 
+ * Extensible hash index implementation
+ *
+ */
 public class ExtensibleIndex implements Index {
 	String idxname;
 	Schema sch;
@@ -66,6 +71,9 @@ public class ExtensibleIndex implements Index {
 		return currentIterator.next();
 	}
 
+	/** CS4432-Project2:
+	 * Used to insert new values
+	 */
 	@Override
 	public void insert(Constant dataval, RID datarid) {
 		int index = dataval.hashCode() % this.size;
