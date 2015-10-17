@@ -34,8 +34,8 @@ public class PerformanceTestQuery {
 			testValues.add(rand.nextInt(100000));
 		}
 
-		for (int i = 1; i <= 5; i++) {
-			System.out.println("Test" + i);
+		for (int i = 1; i <= 4; i++) {
+			System.out.println("Test" + i + "\n-------------------\nRead/Write/Time(usec)");
 			for (Integer val : testValues) {
 				fileManager.initIOCounter();
 				start = System.nanoTime();
@@ -49,9 +49,9 @@ public class PerformanceTestQuery {
 					;
 				}
 				tx.commit();
-				System.out.println("\n"+fileManager.getReadCounter() + ", "
+				System.out.println(fileManager.getReadCounter() + ", "
 						+ fileManager.getWriteCounter() + ", "
-						+ (System.nanoTime() - start));
+						+ (System.nanoTime() - start) / 1000);
 			}
 			System.out.println();
 		}

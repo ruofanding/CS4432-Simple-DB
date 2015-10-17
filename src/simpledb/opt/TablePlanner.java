@@ -87,6 +87,12 @@ class TablePlanner {
 		return p;
 	}
 
+	/**
+	 * CS4432-Project2: after merge the table will be sorted.
+	 * @param current
+	 * @param tblname
+	 * @return
+	 */
 	public Plan makeMergeJoinPlan(Plan current, String tblname) {
 		Predicate joinpred = mypred.joinPred(myschema, current.schema());
 

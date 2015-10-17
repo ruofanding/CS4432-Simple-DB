@@ -21,7 +21,7 @@ import simpledb.tx.Transaction;
  */
 
 /**
- * CS4432-Project1: Test for Clock policy
+ * CS4432-Project2: Test for ExtensibleIndexTester
  *
  */
 public class ExtensibleIndexTester {
@@ -35,7 +35,7 @@ public class ExtensibleIndexTester {
 
 	public static void main(String[] args) {
 		try {
-			int SIZE = 10000;
+			int SIZE = 2000;
 			int[] id = new int[SIZE];
 			String[] names = new String[SIZE];
 			int[] majors = new int[SIZE];
@@ -120,6 +120,10 @@ public class ExtensibleIndexTester {
 			} else {
 				System.out.println("Data not matched");
 			}
+			
+			tx = new Transaction();
+			SimpleDB.planner().executeUpdate("DELETE FROM STUDENT", tx);
+			tx.commit();
 
 		} catch (Exception e) {
 			e.printStackTrace();

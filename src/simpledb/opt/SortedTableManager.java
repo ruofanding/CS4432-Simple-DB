@@ -8,6 +8,12 @@ import simpledb.record.Schema;
 import simpledb.record.TableInfo;
 import simpledb.tx.Transaction;
 
+
+/**
+ * CS4432-Project2: A class check, and set the whether a table is updated.
+ * @author ruofanding
+ *
+ */
 public class SortedTableManager {
 	private HashSet<String> unsorted;
 	private static SortedTableManager instance = null;

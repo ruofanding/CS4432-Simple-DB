@@ -51,6 +51,7 @@ public class SortScan implements Scan {
 			hasmore2 = s2.next();
 		}
 		
+		//CS4432-Project2: check if the table has been updated
 		sorted = SortedTableManager.getManager().isSorted(tblname, this.comp.fields.get(0));
 		sch = runs.get(0).getTableInfo().schema();
 		TableInfo tableInfo = new TableInfo(tblname, sch);

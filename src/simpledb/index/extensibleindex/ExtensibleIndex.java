@@ -65,85 +65,6 @@ public class ExtensibleIndex implements Index {
 	public RID getDataRid() {
 		return currentIterator.next();
 	}
-/*
-	private TableScan moveToIndex(int index) {
-		TableInfo ti = getEHTableInfo(idxname);
-		TableScan ts = new TableScan(ti, tx);
-		ts.beforeFirst();
-
-		for (int i = 0; i <= index + 1; i++) {
-			ts.next();
-		}
-		return ts;
-	}
-
-	private Bucket getBucketFromTS(TableScan ts) {
-		return new Bucket(ts.getInt("bucketId"), ts.getInt("depth"),
-				ts.getInt("size"), idxname, sch, tx);
-	}
-
-	private void updateTSWithBucket(Bucket bucket, TableScan ts) {
-		if (ts.getInt("depth") != bucket.depth)
-			ts.setInt("depth", bucket.depth);
-		if (ts.getInt("size") != bucket.size)
-			ts.setInt("size", bucket.size);
-		if (ts.getInt("bucketId") != bucket.id)
-			ts.setInt("bucketId", bucket.id);
-	}
-	
-	private void updateRelevantBucket(Bucket bucket){
-		TableScan ts = getTableScan();
-		ts.next();
-		int index = 0;
-		int mask = ~((-1) << (bucket.depth)); 
-		while(ts.next()){
-			if((index & mask) == bucket.id){
-				updateTSWithBucket(bucket, ts);
-			}
-			index++;
-		}
-		ts.close();
-	}
-
-	private Bucket getBucketWithIndex(int index) {
-		TableScan ts = moveToIndex(index);
-		Bucket bucket = getBucketFromTS(ts);
-		ts.close();
-		return bucket;
-	}
-
-	private List<Bucket> getAllBucket() {
-		TableInfo ti = getEHTableInfo(idxname);
-		TableScan ts = new TableScan(ti, tx);
-		List<Bucket> list = new ArrayList<Bucket>();
-		ts.beforeFirst();
-
-		if (!ts.next()) {
-			return null;
-		}
-		while (ts.next()) {
-			list.add(getBucketFromTS(ts));
-		}
-		ts.close();
-
-		return list;
-	}
-
-	private void insertBucketList(List<Bucket> list) {
-		TableInfo ti = getEHTableInfo(idxname);
-		TableScan ts = new TableScan(ti, tx);
-		ts.beforeFirst();
-
-		for (Bucket bucket : list) {
-			ts.insert();
-			ts.setInt("depth", bucket.depth);
-			ts.setInt("size", bucket.size);
-			ts.setInt("bucketId", bucket.id);
-		}
-
-		ts.close();
-	}
-*/
 
 	@Override
 	public void insert(Constant dataval, RID datarid) {
@@ -185,10 +106,12 @@ public class ExtensibleIndex implements Index {
 
 	@Override
 	public void delete(Constant dataval, RID datarid) {
-		/*
-		Bucket currentBucket;
-		currentBucket = getBucketWithIndex(dataval.hashCode() % size);
-		currentBucket.delete(dataval, datarid);*/
+		int index = dataval.hashCode() % size;
+		int pos = bucketEntryManager.getBucketPos(index);
+		Bucket currentBucket = bucketListManager.getBucket(pos);
+		
+		currentBucket.delete(dataval, datarid);
+		bucketListManager.updateBucket(currentBucket);
 	}
 
 	@Override
