@@ -9,7 +9,7 @@ import simpledb.tx.Transaction;
 public class SortedTableManager {
 	private static SortedTableManager instance = null;
 	
-	public SortedTableManager getManager(){
+	public static SortedTableManager getManager(){
 		if(instance == null){
 			instance = new SortedTableManager();
 		}

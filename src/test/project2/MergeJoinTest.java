@@ -10,7 +10,7 @@ import simpledb.query.Scan;
 import simpledb.server.SimpleDB;
 import simpledb.tx.Transaction;
 
-public class MergeJointTest {
+public class MergeJoinTest {
 	static int SIZE = 10;
 	public static void main(String[] argv){
 		SimpleDB.init("mergesorttest", Policy.clock);
@@ -33,7 +33,7 @@ public class MergeJointTest {
 		tx = new Transaction();
 		System.out.println("Insert test1");
 		for(int i = 0; i < values.size(); i++){
-			System.out.println(i + " " + values.get(i));
+			System.out.println("a1=" + i + ", a2=" + values.get(i));
 			p.executeUpdate("insert into test1 (a1, a2) values ("+ i + ", " + values.get(i) +")", tx);
 		}
 		tx.commit();
@@ -42,15 +42,27 @@ public class MergeJointTest {
 		tx = new Transaction();
 		System.out.println("Insert test2");
 		for(int i = 0; i < values.size(); i++){
-			System.out.println(i + " " + values.get(i));
+			System.out.println("b1=" + i + ", b2=" + values.get(i));
 			p.executeUpdate("insert into test2 (b1, b2) values ("+ i + ", " + values.get(i) +")", tx);
 		}
 		tx.commit();
 
-		Plan plan = p.createQueryPlan("Select a1, b1 from test1, test2 Where a2 = b2", tx);
+		tx = new Transaction();
+		String qry = "Select a1, b1 from test1, test2 Where a2 = b2";
+		Plan plan = p.createQueryPlan("Select a1, b1, a2, b2 from test1, test2 Where a2 = b2", tx);
 		Scan scan = plan.open();
+		System.out.println(qry);
 		while (scan.next()) {
-			System.out.println(scan.getInt("a1") + " " + scan.getInt("b1"));
+			System.out.println("a1=" + scan.getInt("a1") + ", b1=" + scan.getInt("b1") + ", a2=b2=" + scan.getInt("b2"));
+		}
+		tx.commit();
+
+		qry = "Select b1, b2 from test2";
+		plan = p.createQueryPlan(qry, tx);
+		scan = plan.open();
+		System.out.println(qry);
+		while (scan.next()) {
+			System.out.println("b1=" + scan.getInt("b1") + ", b2=" + scan.getInt("b2"));
 		}
 		tx.commit();
 	}

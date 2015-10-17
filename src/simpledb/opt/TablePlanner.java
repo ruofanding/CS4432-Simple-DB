@@ -27,6 +27,7 @@ class TablePlanner {
 	private Schema myschema;
 	private Map<String, IndexInfo> indexes;
 	private Transaction tx;
+	public String tblname;
 
 	/**
 	 * Creates a new table planner. The specified predicate applies to the
@@ -47,6 +48,7 @@ class TablePlanner {
 		myplan = new TablePlan(tblname, tx);
 		myschema = myplan.schema();
 		indexes = SimpleDB.mdMgr().getIndexInfo(tblname, tx);
+		this.tblname = tblname;
 	}
 	
 
@@ -76,7 +78,6 @@ class TablePlanner {
 	public Plan makeJoinPlan(Plan current) {
 		Schema currsch = current.schema();
 		Predicate joinpred = mypred.joinPred(myschema, currsch);
-		String mycolumn;
 
 		if (joinpred == null)
 			return null;
@@ -86,7 +87,7 @@ class TablePlanner {
 		return p;
 	}
 
-	public Plan makeMergeJoinPlan(Plan current) {
+	public Plan makeMergeJoinPlan(Plan current, String tblname) {
 		Predicate joinpred = mypred.joinPred(myschema, current.schema());
 
 		if (joinpred != null) {
@@ -98,7 +99,7 @@ class TablePlanner {
 					break;
 				}
 			}
-			return new MergeJoinPlan(current, myplan, currentField, myField, tx);
+			return new MergeJoinPlan(current, myplan, currentField, myField, tblname, this.tblname, tx);
 		}
 		return null;
 	}

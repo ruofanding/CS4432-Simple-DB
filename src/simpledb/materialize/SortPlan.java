@@ -2,6 +2,7 @@ package simpledb.materialize;
 
 import simpledb.tx.Transaction;
 import simpledb.record.*;
+import simpledb.opt.SortedTableManager;
 import simpledb.query.*;
 
 import java.util.*;
@@ -16,6 +17,7 @@ public class SortPlan implements Plan {
 	private Transaction tx;
 	private Schema sch;
 	private RecordComparator comp;
+	private String tblname;
 
 	/**
 	 * Creates a sort plan for the specified query.
@@ -27,11 +29,14 @@ public class SortPlan implements Plan {
 	 * @param tx
 	 *            the calling transaction
 	 */
-	public SortPlan(Plan p, List<String> sortfields, Transaction tx) {
+	public SortPlan(Plan p, List<String> sortfields, Transaction tx, String tblname) {
 		this.p = p;
 		this.tx = tx;
 		sch = p.schema();
 		comp = new RecordComparator(sortfields);
+		this.tblname = tblname;
+
+		SortedTableManager sMgr = SortedTableManager.getManager();
 	}
 
 	/**
@@ -46,7 +51,7 @@ public class SortPlan implements Plan {
 		src.close();
 		while (runs.size() > 2)
 			runs = doAMergeIteration(runs);
-		return new SortScan(runs, comp);
+		return new SortScan(runs, comp, tblname);
 	}
 
 	/**

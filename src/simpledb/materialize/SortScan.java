@@ -1,8 +1,16 @@
 package simpledb.materialize;
 
+import java.util.Arrays;
+import java.util.List;
+
+import simpledb.query.Constant;
+import simpledb.query.Scan;
+import simpledb.query.TableScan;
+import simpledb.query.UpdateScan;
 import simpledb.record.RID;
-import simpledb.query.*;
-import java.util.*;
+import simpledb.record.Schema;
+import simpledb.record.TableInfo;
+import simpledb.tx.Transaction;
 
 /**
  * The Scan class for the <i>sort</i> operator.
@@ -17,6 +25,10 @@ public class SortScan implements Scan {
 	private RecordComparator comp;
 	private boolean hasmore1, hasmore2 = false;
 	private List<RID> savedposition;
+	private String tblname;
+	private TableScan originScan;
+	private Transaction tx;
+	private Schema sch;
 
 	/**
 	 * Creates a sort scan, given a list of 1 or 2 runs. If there is only 1 run,
@@ -27,7 +39,8 @@ public class SortScan implements Scan {
 	 * @param comp
 	 *            the record comparator
 	 */
-	public SortScan(List<TempTable> runs, RecordComparator comp) {
+	public SortScan(List<TempTable> runs, RecordComparator comp, String tblname) {
+		this.tblname = tblname;
 		this.comp = comp;
 		s1 = (UpdateScan) runs.get(0).open();
 		hasmore1 = s1.next();
@@ -35,6 +48,9 @@ public class SortScan implements Scan {
 			s2 = (UpdateScan) runs.get(1).open();
 			hasmore2 = s2.next();
 		}
+		sch = runs.get(0).getTableInfo().schema();
+		TableInfo tableInfo = new TableInfo(tblname, sch);
+		originScan = new TableScan(tableInfo, runs.get(0).tx);
 	}
 
 	/**
@@ -45,6 +61,8 @@ public class SortScan implements Scan {
 	 * @see simpledb.query.Scan#beforeFirst()
 	 */
 	public void beforeFirst() {
+		originScan.beforeFirst();
+
 		currentscan = null;
 		s1.beforeFirst();
 		hasmore1 = s1.next();
@@ -80,6 +98,11 @@ public class SortScan implements Scan {
 			currentscan = s1;
 		else if (hasmore2)
 			currentscan = s2;
+		
+		originScan.next();
+		for(String fields: sch.fields()){
+			originScan.setInt(fields, currentscan.getInt(fields));
+		}
 		return true;
 	}
 
@@ -92,6 +115,7 @@ public class SortScan implements Scan {
 		s1.close();
 		if (s2 != null)
 			s2.close();
+		originScan.close();
 	}
 
 	/**
