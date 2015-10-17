@@ -154,15 +154,27 @@ public class FileMgr {
 		return fc;
 	}
 
+	/** CS4432-Project2:
+	 * Initializes I/O counter for performance testing
+	 * 
+	 */
 	public void initIOCounter(){
 		this.readCounter = 0;
 		this.writeCounter = 0;
 	}
-
+	
+	/** CS4432-Project2:
+	 *  
+	 * @return read counter
+	 */
 	public int getReadCounter(){
 		return this.readCounter;
 	}
 
+	/** CS4432-Project2:
+	 * 
+	 * @return write counter
+	 */
 	public int getWriteCounter(){
 		return this.writeCounter;
 	}

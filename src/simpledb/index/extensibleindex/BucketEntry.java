@@ -9,6 +9,12 @@ import simpledb.record.Schema;
 import simpledb.record.TableInfo;
 import simpledb.tx.Transaction;
 
+
+/** CS4432-Project2:
+ * 
+ * BucketEntry objects contain the positions of Buckets.
+ * Used to find the correct Bucket to insert values to.
+ */
 public class BucketEntry {
 	String idxname;
 	Transaction tx;
@@ -18,6 +24,9 @@ public class BucketEntry {
 		this.tx = tx;
 	}
 
+	/** CS4432-Project2:
+	 *  Returns a string containing the positions 
+	 */
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		TableScan ts = new TableScan(tableInfo(), tx);
@@ -29,6 +38,11 @@ public class BucketEntry {
 		return sb.toString();
 	}
 	
+	/**
+	 *  CS4432-Project2:
+	 * @param index
+	 * @return the position of bucket
+	 */
 	public int getBucketPos(int index){
 		TableScan ts = new TableScan(tableInfo(), tx);
 		
@@ -44,6 +58,9 @@ public class BucketEntry {
 		return pos;
 	}
 	
+	/** CS4432-Project2:
+	 * Expands the bucket entry object to accommodate new entries
+	 */
 	public void expandEntry(){
 		TableScan ts;
 		
@@ -62,6 +79,10 @@ public class BucketEntry {
 		ts.close();
 	}
 
+	/** CS4432-Project2:
+	 *  Updates bucket entry for given bucket
+	 * @param bucket
+	 */
 	public void updateEntry(Bucket bucket){
 		TableScan ts;
 		ts = new TableScan(tableInfo(), tx);

@@ -5,6 +5,10 @@ import simpledb.record.Schema;
 import simpledb.record.TableInfo;
 import simpledb.tx.Transaction;
 
+/** CS4432-Project2:
+ * Contains index name, transaction, and schema metadata for 
+ * usage by extensible hash index
+ */
 public class BucketList {
 	
 	String idxname;
@@ -27,6 +31,10 @@ public class BucketList {
 		ts.close();
 	}
 
+	/** CS4432-Project2:
+	 * Insert a new bucket to the bucket list
+	 * @param bucket
+	 */
 	public void insertNewBucket(Bucket bucket){
 		TableScan ts = new TableScan(tableInfo(), tx);
 		
@@ -37,6 +45,10 @@ public class BucketList {
 		ts.close();
 	}
 	
+	/** CS4432-Project2:
+	 * Update a bucket in the list
+	 * @param bucket
+	 */
 	public void updateBucket(Bucket bucket){
 		TableScan ts = new TableScan(tableInfo(), tx);
 		
@@ -65,7 +77,12 @@ public class BucketList {
 		ts.close();
 		return sb.toString();
 	}	
-
+	
+	/** CS4432-Project2:
+	 * Get a bucket from the list
+	 * @param pos
+	 * @return
+	 */
 	public Bucket getBucket(int pos){
 		TableScan ts;
 		ts = new TableScan(tableInfo(), tx);
