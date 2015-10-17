@@ -8,7 +8,7 @@ import simpledb.planner.Planner;
 import simpledb.server.SimpleDB;
 import simpledb.tx.Transaction;
 
-public class PerformanceTestCreate {
+public class PerformanceTestInsert {
 	final static int maxSize = 100000;
 
 	/**
